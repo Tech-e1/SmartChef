@@ -12,17 +12,17 @@ const nextConfig = {
         remotePatterns: isE2E ? [] : [
             {
                 protocol: 'https',
-                hostname: 'lh3.googleusercontent.com',
+                hostname: '',
                 pathname: '/**',        // <- required
             },
             {
                 protocol: 'https',
-                hostname: 'smart-recipe-generator.s3.amazonaws.com',
+                hostname: '',
                 pathname: '/**',
             },
             {
                 protocol: 'https',
-                hostname: 'www.gravatar.com',
+                hostname: '',
                 pathname: '/**',
             },
         ],
