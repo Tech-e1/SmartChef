@@ -25,8 +25,8 @@
     "react": "^18",
     "react-dom": "^18",
     "react-markdown": "^10.1.0",
-    "uuid": "^10.0.0"
-    "zustand":"^5.0.15",
+    "uuid": "^10.0.0",
+        "zustand": "^5.0.15",
     "localStorage":"^2.4.5"
   },
   "devDependencies": {
