@@ -1,5 +1,4 @@
 import React from 'react';
-import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Header from './Header';
 import Hero from '../pages/Hero';
@@ -22,14 +21,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   if (status === 'loading') {
     return <Loading />;
-  }
-
-  if (status === 'unauthenticated') {
-    if (router.pathname === '/RecipeDetail') {
-      signIn('google')
-      return;
-    }
-    return <Hero />
   }
 
   if (session) {
