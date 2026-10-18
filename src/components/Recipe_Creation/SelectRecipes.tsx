@@ -21,7 +21,7 @@ const SelectRecipesComponent = ({ generatedRecipes, selectedRecipes, updateSelec
     };
 
     const finalRecipes = generatedRecipes.filter((recipe) =>
-        selectedRecipes.includes(recipe.openaiPromptId)
+        selectedRecipes.includes(recipe.ollamaPromptId)
     );
 
     return (
@@ -30,7 +30,7 @@ const SelectRecipesComponent = ({ generatedRecipes, selectedRecipes, updateSelec
             {/* Responsive Recipe Cards with Spacing */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {generatedRecipes.map((recipe) => (
-                    <div key={recipe.openaiPromptId}>
+                    <div key={recipe.ollamaPromptId}>
                         <RecipeCard
                             recipe={recipe}
                             handleRecipeSelection={handleRecipeSelection}

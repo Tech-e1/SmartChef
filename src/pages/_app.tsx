@@ -6,6 +6,8 @@ import Loading from '../components/Loading';
 import Head from 'next/head'
 import Layout from '../components/Layout';
 import '../styles/globals.css';
+import '@/styles/globals.css';
+import '@/styles/print.css';
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
     const [loading, setLoading] = useState(false);

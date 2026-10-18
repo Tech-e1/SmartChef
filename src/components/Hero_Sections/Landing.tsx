@@ -1,4 +1,4 @@
-import { signIn } from 'next-auth/react';
+
 import Image from 'next/image';
 
 export default function Landing() {
@@ -13,7 +13,7 @@ export default function Landing() {
                 </p>
                 <button
                     className="w-fit rounded-md bg-brand-600 px-5 py-3 text-base font-semibold text-white shadow-md transition hover:bg-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
-                    onClick={() => signIn('google')}
+
                 >
                     Get started
                 </button>

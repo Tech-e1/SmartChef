@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { apiMiddleware } from '../../lib/apiMiddleware';
 import Recipe from '../../models/recipe';
-import { connectDB } from '../../lib/mongodb';
 import { filterResults, paginationQueryHelper } from '../../utils/utils';
 import { ExtendedRecipe, PaginationQueryType } from '../../types';
 

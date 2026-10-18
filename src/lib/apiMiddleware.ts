@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../pages/api/auth/[...nextauth]';
 
 /**
  * Middleware to handle HTTP method validation and authentication

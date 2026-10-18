@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { apiMiddleware } from '../../lib/apiMiddleware';
-import { generateRecipe } from '../../lib/openai';
+import {RECIPE_GENERATION_SYSTEM_PROMPT,createRecipeUserPrompt,OLLAMA_CONFIG,} from '@/lib/prompts';
 
 /**
  * API handler for generating recipes based on provided ingredients and dietary preferences.
@@ -18,8 +18,21 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
         }
 
         // Generate recipes using OpenAI API
-        console.info('Generating recipes from OpenAI...');
-        const response = await generateRecipe(ingredients, dietaryPreferences, session.user.id);
+        
+	const prompt = `${RECIPE_GENERATION_SYSTEM_PROMPT}\n\n${createRecipeUserPrompt(ingredients, dietaryPreferences)}`;
+	const response = await fetch(`${OLLAMA_CONFIG.endpoint}/api/generate`, {
+		  method: 'POST',
+		  headers: { 'Content-Type': 'application/json' },
+		  body: JSON.stringify({
+			  model: OLLAMA_CONFIG.model,
+    			  prompt,
+    			  stream: false,
+   			  options: {
+      				temperature: OLLAMA_CONFIG.temperature,
+			        num_predict: OLLAMA_CONFIG.numPredictions,
+    },
+  }),
+});
 
         // Respond with the generated recipes
         res.status(200).json(response);

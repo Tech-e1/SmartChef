@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { apiMiddleware } from '../../lib/apiMiddleware';
-import { validateIngredient } from '../../lib/openai';
+import { validateIngredient } from '../../lib/Ollama';
 import Ingredient from '../../models/ingredient';
-import mongoose from 'mongoose';
 import pluralize from 'pluralize';
 
 const MAX_INGREDIENT_NAME_LENGTH = 20;
@@ -36,7 +35,7 @@ const parseValidationResponse = (
             possibleVariations
         };
     } catch (error) {
-        console.error('Failed to parse OpenAI ingredient validation response', error);
+        console.error('Failed to parse Ollama ingredient validation response', error);
         return null;
     }
 };
@@ -83,8 +82,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
             });
         }
 
-        // Validate ingredient using OpenAI
-        console.info('Validating ingredient from OpenAI...');
+        // Validate ingredient using Ollama
+        console.info('Validating ingredient from Ollama...');
         const response = await validateIngredient(trimmedIngredientName, userId);
         const parsedResponse = parseValidationResponse(response);
 
@@ -93,7 +92,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
                 // Create new ingredient if it does not exist
                 const newIngredient = await Ingredient.create({
                     name: formattedIngredientName,
-                    createdBy: new mongoose.Types.ObjectId(userId)
+             
                 });
                 return res.status(200).json({
                     message: 'Success',

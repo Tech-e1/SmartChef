@@ -1,10 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { apiMiddleware } from '../../lib/apiMiddleware';
-import { connectDB } from '../../lib/mongodb';
 import Recipe from '../../models/recipe';
 import aigenerated from '../../models/aigenerated';
-import { generateChatResponse } from '../../lib/openai';
 import { ExtendedRecipe } from '../../types';
+import {CHAT_ASSISTANT_SYSTEM_PROMPT,createChatUserMessage,} from '@/lib/prompts';
 
 /**
  * POST /api/chat-assistant
@@ -12,17 +11,7 @@ import { ExtendedRecipe } from '../../types';
  */
 const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) => {
     try {
-        const { message, recipeId, history = [] } = req.body;
-
-        if (!message || !recipeId) {
-            return res.status(400).json({ error: 'Message and recipeId are required.' });
-        }
-
-        await connectDB();
-        // Check if the user has exceeded the API request limit on first entry
-        if (history.length === 1) {
-            // Count the number of AI-generated entries associated with the user's ID
-            const totalGeneratedCount = await aigenerated.countDocuments({ userId: session.user.id }).exec();
+      const prompt = `${CHAT_ASSISTANT_SYSTEM_PROMPT}\n\n${createChatUserMessage(recipe, userQuestion)}`;
             
             if (totalGeneratedCount >= Number(process.env.API_REQUEST_LIMIT)) {
                 // If limit is reached, respond with reachedLimit flag and an empty ingredient list

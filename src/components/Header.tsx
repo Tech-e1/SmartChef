@@ -2,13 +2,7 @@ import { useRouter } from 'next/router';
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import Image from 'next/image'
-import { signOut } from 'next-auth/react';
 import Notifications from './Notifications';
-
-const userNavigation = [
-    { name: 'Your Profile', route: '/Profile' },
-    { name: 'Sign out', route: '/auth/signout' },
-]
 
 const navigation = [
     { name: 'Home', route: '/Home', style: 'text-gray-300 hover:bg-brand-700 hover:text-white' },
@@ -32,15 +26,6 @@ function Header({ user }: HeaderProps) {
 
     const router = useRouter();
 
-    const handleNavigation = (menu: { name: string, route: string }) => {
-        if (menu.name === 'Sign out') {
-            signOut()
-            return
-        }
-        if (menu.name === 'About') {
-            window.open('https://github.com/Dereje1/smart-recipe-generator', '_blank');
-        }
-        router.push(menu.route)
     }
 
     if (!user) return null;

@@ -41,13 +41,13 @@ const RecipeCard = ({ recipe, handleRecipeSelection, selectedRecipes, showSwitch
                     {/* Optional Switch to Select Recipe */}
                     {showSwitch && (
                         <Switch
-                            checked={selectedRecipes.includes(recipe.openaiPromptId)}
+                            checked={selectedRecipes.includes(recipe.ollamaPromptId)}
                             onChange={() =>
-                                handleRecipeSelection ? handleRecipeSelection(recipe.openaiPromptId) : undefined
+                                handleRecipeSelection ? handleRecipeSelection(recipe.ollamaPromptId) : undefined
                             }
                             className={`
                 relative inline-flex flex-shrink-0
-                ${selectedRecipes.includes(recipe.openaiPromptId) ? 'bg-brand-500' : 'bg-gray-300'}
+                ${selectedRecipes.includes(recipe.ollamaPromptId) ? 'bg-brand-500' : 'bg-gray-300'}
                 h-[20px] w-[40px] sm:h-[28px] sm:w-[54px]
                 cursor-pointer rounded-full border-2 border-transparent
                 transition-colors duration-200 ease-in-out focus:outline-none
@@ -59,7 +59,7 @@ const RecipeCard = ({ recipe, handleRecipeSelection, selectedRecipes, showSwitch
                                 className={`
                     pointer-events-none inline-block
                     h-[16px] w-[16px] sm:h-[24px] sm:w-[23px]
-                    ${selectedRecipes.includes(recipe.openaiPromptId) ? 'translate-x-5 sm:translate-x-7' : 'translate-x-0'}
+                    ${selectedRecipes.includes(recipe.ollamaPromptId) ? 'translate-x-5 sm:translate-x-7' : 'translate-x-0'}
                     transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out
                 `}
                             />
