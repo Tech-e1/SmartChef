@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getSession } from 'next-auth/react';
+import { useSession } from '@/contexts/SessionContext';
 import { ExtendedRecipe, PaginationQueryType } from "../types";
 import { GetServerSidePropsContext } from "next";
 
@@ -36,7 +36,9 @@ export const updateRecipeList = (
 // Utility to fetch data on server-side while ensuring user authentication
 export const getServerSidePropsUtility = async (context: GetServerSidePropsContext, address: string, propskey: string = 'recipes') => {
   try {
-    const session = await getSession(context);
+    // Simple session check - look for a session cookie
+    const sessionCookie = context.req.cookies?.session;
+    const session = sessionCookie ? JSON.parse(sessionCookie) : null;
     if (!session) {
       return {
         redirect: {

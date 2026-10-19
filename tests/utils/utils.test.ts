@@ -1,4 +1,3 @@
-import { getSession } from "next-auth/react"
 import axios from "axios";
 import { updateRecipeList, getServerSidePropsUtility, call_api, playAudio, paginationQueryHelper } from "../../src/utils/utils";
 import { PaginationQueryType } from "../../src/types";
@@ -6,7 +5,6 @@ import { stubRecipeBatch } from "../stub";
 
 jest.useFakeTimers();
 jest.mock('axios');
-jest.mock("next-auth/react")
 
 
 describe('Refreshing a list of recipes', () => {
@@ -34,22 +32,19 @@ describe('getServerSideProps abstraction utility', () => {
         axiosSpy.mockClear()
     })
     it('will redirect to root if there is no user session', async () => {
-        (getSession as jest.Mock).mockImplementationOnce(() => null)
         const result = await getServerSidePropsUtility({} as any, '/any')
         expect(result).toEqual({ redirect: { destination: '/', permanent: false } })
     })
 
     it('will succesfully return the props', async () => {
-        (getSession as jest.Mock).mockImplementationOnce(() => 'active session')
         axiosSpy.mockImplementationOnce(() => Promise.resolve({ data: 'succesfully got recipe data' }))
-        const result = await getServerSidePropsUtility({ req: { headers: { cookie: 'a cookie' } } } as any, '/any')
+        const result = await getServerSidePropsUtility({ req: { headers: { cookie: 'a cookie' }, cookies: { session: JSON.stringify({ user: { id: '1' } }) } } } as any, '/any')
         expect(result).toEqual({ props: { recipes: 'succesfully got recipe data' } })
     })
 
     it('will return an empty array for the props if the request gets rejected', async () => {
-        (getSession as jest.Mock).mockImplementationOnce(() => 'active session')
         axiosSpy.mockImplementationOnce(() => Promise.reject())
-        const result = await getServerSidePropsUtility({ req: { headers: { cookie: 'a cookie' } } } as any, '/any')
+        const result = await getServerSidePropsUtility({ req: { headers: { cookie: 'a cookie' }, cookies: { session: JSON.stringify({ user: { id: '1' } }) } } } as any, '/any')
         expect(result).toEqual({ props: { recipes: [] } })
     })
 })
