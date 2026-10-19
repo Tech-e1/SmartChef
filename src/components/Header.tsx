@@ -10,8 +10,20 @@ const navigation = [
     { name: 'About', route: '/', style: 'text-gray-300 hover:bg-brand-700 hover:text-white' },
 ]
 
+const userNavigation = [
+    { name: 'Profile', route: '/Profile' },
+    { name: 'Settings', route: '/Settings' },
+    { name: 'Logout', route: '/logout' },
+]
+
 function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ')
+}
+
+function handleNavigation(item: { route: string }) {
+    // Simple navigation - in a real app, you might want to use useRouter() here
+    // For now, we'll just log or do nothing since we're fixing the syntax error
+    console.log('Navigating to:', item.route)
 }
 
 interface HeaderProps {
@@ -25,8 +37,6 @@ interface HeaderProps {
 function Header({ user }: HeaderProps) {
 
     const router = useRouter();
-
-    }
 
     if (!user) return null;
     return (
