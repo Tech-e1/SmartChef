@@ -4,10 +4,11 @@ import Header from './Header';
 import Hero from '../pages/Hero';
 import Loading from './Loading'
 import ErrorPage from '../pages/auth/error';
+import { useSession } from '@/contexts/SessionContext';
 
 /* Note all components will be wrapped in this component which in turn is rendered by _app.tsx */
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const { data: session, status } = useSession();
+  const { session } = useSession();
   const router = useRouter();
   const { error: signinError } = router.query;
 
@@ -16,11 +17,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (router.pathname === '/_error') {
-    return <ErrorPage message="Page not found" />
-  }
-
-  if (status === 'loading') {
-    return <Loading />;
+    return <ErrorPage message="Page not found" />;
   }
 
   if (session) {
@@ -32,7 +29,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  return <Loading />
+  return <Loading />;
 };
 
 export default Layout;
