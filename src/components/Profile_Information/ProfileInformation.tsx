@@ -1,4 +1,4 @@
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/contexts/SessionContext';
 import Image from 'next/image';
 import { ExtendedRecipe } from '../../types';
 import { Button } from '@headlessui/react';
@@ -11,11 +11,11 @@ interface ProfileInformationProps {
 }
 
 function ProfileInformation({ recipes, updateSelection, selectedDisplay, AIusage }: ProfileInformationProps) {
-    const { data: session } = useSession();
+    const session = useSession();
 
-    if (!session || !session.user) return null;
+    if (!session?.user) return null;
 
-    const { user } = session;
+    const user = session.user;
 
     const ownedRecipes = recipes.filter(r => r.owns);
     const favoriteRecipes = recipes.filter(r => r.liked);

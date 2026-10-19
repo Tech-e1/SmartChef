@@ -1,5 +1,5 @@
 import { AppProps } from 'next/app';
-import { SessionProvider } from 'next-auth/react';
+import { SessionProvider } from '@/contexts/SessionContext';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Loading from '../components/Loading';
@@ -9,7 +9,7 @@ import '../styles/globals.css';
 import '@/styles/globals.css';
 import '@/styles/print.css';
 
-function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
+function MyApp({ Component, pageProps }: AppProps) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -33,7 +33,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
     }, [router])
 
     return loading ? <Loading /> : (
-        <SessionProvider session={session} refetchInterval={5 * 60}>
+        <SessionProvider>
             <Layout>
                 <Head>
                     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />

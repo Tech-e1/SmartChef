@@ -1,4 +1,4 @@
-import { useSession, getSession } from 'next-auth/react';
+import { useSession } from '@/contexts/SessionContext';
 import { useState } from 'react';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -20,8 +20,8 @@ export default function Hero() {
     // State to manage the currently selected page
     const [selectedPage, setSelectedPage] = useState<string | null>(null);
 
-    // Fetch the current session and status
-    const { data: session, update } = useSession();
+    // Fetch the current session
+    const session = useSession();
 
     // Function to render the content based on the selected page
     const renderContent = () => {
