@@ -16,9 +16,8 @@
   },
   "dependencies": {
     "@headlessui/react": "^0.0.0-insiders.557c103",
-    "@heroicons/react": "^2.2.0",
-    "ollama": "^0.40.4",
-    "axios": "^1.15.2",
+        "@heroicons/react": "^2.2.0",
+        "axios": "^1.15.2",
     "cookies-next": "^4.1.1",
     "next": "^14.2.35",
     "pluralize": "^8.0.0",
@@ -26,8 +25,7 @@
     "react-dom": "^18",
     "react-markdown": "^10.1.0",
     "uuid": "^10.0.0",
-        "zustand": "^5.0.15",
-    "localStorage":"^2.4.5"
+        "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",
