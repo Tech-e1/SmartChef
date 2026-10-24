@@ -8,7 +8,7 @@ import { useSession } from '@/contexts/SessionContext';
 
 /* Note all components will be wrapped in this component which in turn is rendered by _app.tsx */
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const { session } = useSession();
+  const session = useSession();
   const router = useRouter();
   const { error: signinError } = router.query;
 
