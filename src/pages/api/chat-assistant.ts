@@ -3,7 +3,7 @@ import { apiMiddleware } from '../../lib/apiMiddleware';
 import Recipe from '../../models/recipe';
 import aigenerated from '../../models/aigenerated';
 import { ExtendedRecipe } from '../../types';
-import {CHAT_ASSISTANT_SYSTEM_PROMPT,createChatUserMessage,} from '@/lib/prompts';
+import { CHAT_ASSISTANT_SYSTEM_PROMPT, createChatUserMessage } from '@/lib/prompts';
 
 /**
  * POST /api/chat-assistant
@@ -11,15 +11,10 @@ import {CHAT_ASSISTANT_SYSTEM_PROMPT,createChatUserMessage,} from '@/lib/prompts
  */
 const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) => {
     try {
-      const prompt = `${CHAT_ASSISTANT_SYSTEM_PROMPT}\n\n${createChatUserMessage(recipe, userQuestion)}`;
-            
-            if (totalGeneratedCount >= Number(process.env.API_REQUEST_LIMIT)) {
-                // If limit is reached, respond with reachedLimit flag and an empty ingredient list
-                res.status(200).json({
-                    reachedLimit: true,
-                });
-                return;
-            }
+        const { recipeId, message, history } = req.body;
+
+        if (!recipeId || !message) {
+            return res.status(400).json({ error: 'Missing required fields' });
         }
 
         const recipe = await Recipe.findById(recipeId).lean() as unknown as ExtendedRecipe;

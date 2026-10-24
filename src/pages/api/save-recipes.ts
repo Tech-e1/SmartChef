@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { apiMiddleware } from '../../lib/apiMiddleware';
-import recipe from '../../models/recipe';
+import Recipe from '../../models/recipe';
 import { Recipe, UploadReturnType, ExtendedRecipe } from '../../types';
 
 /**
@@ -13,7 +13,6 @@ const getS3Link = (uploadResults: UploadReturnType[] | null, location: string) =
     const fallbackImg = '/logo.svg';
     if (!uploadResults) return fallbackImg;
     const filteredResult = uploadResults.filter(result => result.location === location);
-    }
     return fallbackImg;
 };
 
@@ -31,10 +30,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
         // Generate images using OpenAI
         console.info('Getting images from OpenAI...');
         const imageResults = await generateImages(recipeNames, session.user.id);
-        
-            };
-        });
-
 
         // Run `generateRecipeTags` asynchronously in the background
         savedRecipes.forEach((r) => {

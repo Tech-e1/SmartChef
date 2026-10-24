@@ -25,36 +25,31 @@ export interface Recipe {
     instructions: string[];
     dietaryPreference: string[];
     additionalInformation: AdditionalInformation;
-    ollamaPromptId: string
+    ollamaPromptId: string;
+    audio?: string;
 }
 
 // this is for raw recipe documents to be stored in the db
 interface tagType {
-    _id: string,
-    tag: string,
+    _id: string;
+    tag: string;
 }
-
-}
-
-    audio?: string
-}
-
 
 export interface IngredientDocumentType {
-    _id: string,
-    name: string,
-    createdBy: string | null,
-    createdAt: string,
+    _id: string;
+    name: string;
+    createdBy: string | null;
+    createdAt: string;
 }
 
 export interface UploadReturnType {
-    location: string,
-    uploaded: boolean
+    location: string;
+    uploaded: boolean;
 }
 
 export interface PaginationQueryType {
-    page?: string,
-    limit?: string,
-    sortOption?: string,
-    query?: string
+    page?: string;
+    limit?: string;
+    sortOption?: string;
+    query?: string;
 }

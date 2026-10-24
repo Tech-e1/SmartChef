@@ -127,6 +127,7 @@ export default function RecipeDetail() {
                     </div>
 
 
+
                     {/* Instructions */}
                     <div className="mb-4">
                         <h3 className="mb-2">Instructions</h3> {/* Section title */}
@@ -139,38 +140,7 @@ export default function RecipeDetail() {
                             ))}
                         </ol>
                     </div>
-<article className="recipe-card print-section">
-  {recipe.image && (
-    <figure>
-      <img src={recipe.image.thumbUrl} alt={recipe.title}
-           className="recipe-hero-img" />
-      <figcaption className="image-credit">
-        {recipe.image.artist} — {recipe.image.license}{' '}
-        <a href={recipe.image.pageUrl}>source</a>
-      </figcaption>
-    </figure>
-  )}
 
-  <h1>{recipe.title}</h1>
-
-  <h2>Ingredients</h2>
-  <ul className="ingredients-list">
-    {recipe.ingredients.map((i, n) => (
-      <li key={n}>{i.quantity} {i.unit} {i.item}</li>
-    ))}
-  </ul>
-
-  <h2>Instructions</h2>
-  <ol className="instructions-list">
-    {recipe.steps.map((s, n) => <li key={n}>{s}</li>)}
-  </ol>
-</article>
-
-<div className="no-print mt-4 flex gap-2">
-  <PrintButton label="Print recipe" />
-  <button onClick={() => exportRecipeTXT(recipe)}>Save as .txt</button>
-  <button onClick={() => copyRecipeToClipboard(recipe)}>Copy</button>
-</div>
                     {/* Additional Information */}
                     <div className="mb-6">
                         <h3 className="mb-4 text-gray-800">Additional Information</h3> {/* Section title */}
@@ -227,4 +197,3 @@ export default function RecipeDetail() {
         </div>
     );
 }
-
