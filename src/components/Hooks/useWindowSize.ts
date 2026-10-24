@@ -6,9 +6,10 @@ interface WindowSize {
 }
 
 const useWindowSize = (): WindowSize => {
+    // Initialize with default values for SSR compatibility
     const [windowSize, setWindowSize] = useState<WindowSize>({
-        width: window.innerWidth,
-        height: window.innerHeight
+        width: typeof window !== 'undefined' ? window.innerWidth : 0,
+        height: typeof window !== 'undefined' ? window.innerHeight : 0
     });
 
     useEffect(() => {

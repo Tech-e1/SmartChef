@@ -20,16 +20,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     return <ErrorPage message="Page not found" />;
   }
 
-  if (session) {
-    return (
-      <div>
-        <Header user={session.user} />
-        <main className="min-h-screen bg-brand-50">{children}</main>
-      </div>
-    );
-  }
-
-  return <Loading />;
+  return (
+    <div>
+      <Header user={session?.user} />
+      <main className="min-h-screen bg-brand-50">{children}</main>
+    </div>
+  );
 };
 
 export default Layout;
