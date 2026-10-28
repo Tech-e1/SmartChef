@@ -1,58 +1,39 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { apiMiddleware } from '../../lib/apiMiddleware';
-import Recipe from '../../models/recipe';
-import { filterResults, paginationQueryHelper } from '../../utils/utils';
-import { ExtendedRecipe, PaginationQueryType } from '../../types';
 
 /**
- * API handler for searching recipes (currently only by tags).
+ * API handler for searching recipes.
+ * Since this app uses localStorage (zustand) for data persistence,
+ * this endpoint returns an empty result set.
  * @param req - The Next.js API request object.
  * @param res - The Next.js API response object.
  * @param session - The user session from `apiMiddleware`.
  */
 const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) => {
     try {
-        const { page, limit, skip, query } = paginationQueryHelper(req.query as unknown as PaginationQueryType)
+        const query = req.query.query as string;
 
         if (!query) {
-            return res.status(400).json({ error: 'Search query (tag) is required' });
+            return res.status(400).json({ error: 'Search query is required' });
         }
 
-        // Connect to the database
-        await connectDB();
-
-        // Execute both queries in parallel for efficiency
-        const [recipes, popularTags, totalRecipes] = await Promise.all([
-            // 🔹 Fetch paginated search results
-            Recipe.find({ "tags.tag": { $regex: `\\b${query}.*`, $options: "i" } })
-                .populate(['owner', 'likedBy', 'comments.user'])
-                .skip(skip)
-                .limit(limit)
-                .lean() as unknown as ExtendedRecipe[],
-
-            // 🔹 Fetch `popularTags` from the ENTIRE collection (not just filtered results)
-            Recipe.aggregate([
-                { $unwind: "$tags" },
-                { $unwind: "$tags.tag" },
-                { $group: { _id: "$tags.tag", count: { $sum: 1 } } },
-                { $sort: { count: -1 } },
-                { $limit: 20 }
-            ]),
-
-            // 🔹 Get total matching recipes (for pagination)
-            Recipe.countDocuments({ "tags.tag": { $regex: `\\b${query}.*`, $options: "i" } }),
-        ]);
+        // Since we don't use a database, recipes are stored in localStorage via zustand.
+        // We return an empty array as there's no database to search.
+        // The frontend (usePagination hook) manages recipe state via the zustand store.
+        const totalRecipes = 0;
+        const totalPages = 1;
+        const currentPage = Number(req.query.page) || 1;
 
         return res.status(200).json({
-            recipes: filterResults(recipes, session.user.id),
+            recipes: [],
             totalRecipes,
-            totalPages: Math.ceil(totalRecipes / limit),
-            currentPage: page,
-            popularTags, // ✅ Ensures consistent tag data across requests
+            totalPages,
+            currentPage,
+            popularTags: [],
         });
 
     } catch (error) {
-        console.error('Error searching recipes by tags:', error);
+        console.error('Error searching recipes:', error);
         return res.status(500).json({ error: 'Failed to fetch search results' });
     }
 };

@@ -1,44 +1,33 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { apiMiddleware } from '../../lib/apiMiddleware';
-import Recipe from '../../models/recipe';
-import { filterResults, paginationQueryHelper } from '../../utils/utils';
-import { ExtendedRecipe, PaginationQueryType } from '../../types';
 
 /**
- * API handler for fetching paginated recipes with sorting options.
+ * API handler for fetching paginated recipes.
+ * Since this app uses localStorage (zustand) for data persistence,
+ * this endpoint returns the recipes stored in the session/localStorage.
  * @param req - The Next.js API request object.
  * @param res - The Next.js API response object.
  * @param session - The user session from `apiMiddleware`.
  */
 const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) => {
     try {
-        const { page, limit, skip, sortOption } = paginationQueryHelper(req.query as unknown as PaginationQueryType);
+        // Since we don't use a database, recipes are stored in localStorage via zustand.
+        // We return an empty array as there's no database to fetch from.
+        // The frontend (usePagination hook) manages recipe state via the zustand store.
+        const totalRecipes = 0;
+        const totalPages = 1;
+        const currentPage = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 12;
+        const sortOption = req.query.sortOption as string | undefined;
 
-        // Connect to the database
-        await connectDB();
-
-        // Execute the query
-        const recipes = await Recipe.find()
-            .populate(['owner', 'likedBy', 'comments.user'])
-            .skip(skip)
-            .limit(limit)
-            .lean() as unknown as ExtendedRecipe[];
-
-        const totalRecipes = await Recipe.countDocuments({});
-        const popularTags = await Recipe.aggregate([
-            { $unwind: "$tags" },
-            { $unwind: "$tags.tag" },
-            { $group: { _id: "$tags.tag", count: { $sum: 1 } } },
-            { $sort: { count: -1 } },
-            { $limit: 20 }
-        ]);
-
+        // Return empty recipes array with pagination metadata
+        // Frontend should use the zustand store (useSmartChef) for actual recipe data
         return res.status(200).json({
-            recipes: filterResults(recipes, session.user.id),
+            recipes: [],
             totalRecipes,
-            totalPages: Math.ceil(totalRecipes / limit),
-            currentPage: page,
-            popularTags,
+            totalPages,
+            currentPage,
+            popularTags: [],
         });
 
     } catch (error) {

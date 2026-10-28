@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useRef } from "react";
 import { call_api, updateRecipeList } from "../../utils/utils";
-import { ExtendedRecipe } from "../../types";
+import { Recipe } from "@/types/smartchef";
 
 interface Tag {
   _id: string;
@@ -20,14 +20,14 @@ interface UsePaginationProps {
 type PaginationAction =
   | { type: "RESET"; payload: { searchQuery: string; sortOption: string } }
   | { type: "FETCH_START" }
-  | { type: "FETCH_SUCCESS"; payload: { recipes: ExtendedRecipe[]; currentPage: number; totalPages: number; popularTags: Tag[], totalRecipes: number } }
+  | { type: "FETCH_SUCCESS"; payload: { recipes: Recipe[]; currentPage: number; totalPages: number; popularTags: Tag[], totalRecipes: number } }
   | { type: "FETCH_FAILURE" }
   | { type: "INCREMENT_PAGE" }
-  | { type: "UPDATE_RECIPES"; payload: { recipe: ExtendedRecipe | null; deleteId?: string } };
+  | { type: "UPDATE_RECIPES"; payload: { recipe: Recipe | null; deleteId?: string } };
 
 // State shape managed by the reducer
 interface PaginationState {
-  data: ExtendedRecipe[];
+  data: Recipe[];
   page: number;
   totalPages: number;
   loading: boolean;
@@ -115,7 +115,7 @@ export const usePagination = ({
   const shouldAbortFetch = (pageToFetch: number): boolean => {
     if (state.loading) return true;
     if (pageToFetch > state.totalPages) return true;
-  
+
     if (searchQuery.trim()) {
       // In search mode, we only fetch when explicitly triggered,
       // and we avoid fetching the same page twice.
@@ -192,7 +192,7 @@ export const usePagination = ({
   };
 
   // Function to update the recipe list with client-side changes.
-  const handleRecipeListUpdate = (recipe: ExtendedRecipe | null, deleteId?: string) => {
+  const handleRecipeListUpdate = (recipe: Recipe | null, deleteId?: string) => {
     dispatch({ type: "UPDATE_RECIPES", payload: { recipe, deleteId } });
   };
 

@@ -1,54 +1,97 @@
-// src/lib/store.ts
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import type { IngredientItem, Recipe } from '@/types/smartchef';
+import type { IngredientItem, Recipe, ExportEnvelope, InventoryData, BundleData } from '@/types/smartchef';
 
-interface SmartChefState {
-  inventory: IngredientItem[];
-  recipes: Recipe[];
-  addIngredient: (i: IngredientItem) => void;
-  removeIngredient: (name: string) => void;
-  setInventory: (items: IngredientItem[]) => void;
-  upsertRecipe: (r: Recipe) => void;
-  removeRecipe: (id: string) => void;
-  setRecipes: (r: Recipe[]) => void;
-  clearAll: () => void;
+const APP_NAME = 'SmartChef';
+const APP_VERSION = '0.1.0';
+
+/* ---------- helpers ---------- */
+
+function makeEnvelope<T>(kind: ExportEnvelope<T>['kind'], data: T): ExportEnvelope<T> {
+  return {
+    format: 'smartchef',
+    schemaVersion: 1,
+    kind,
+    exportedAt: new Date().toISOString(),
+    app: { name: APP_NAME, version: APP_VERSION },
+    data,
+  };
 }
 
-export const useSmartChef = create<SmartChefState>()(
-  persist(
-    (set) => ({
-      inventory: [],
-      recipes: [],
+export function downloadFile(filename: string, content: string | Blob) {
+  const blob = content instanceof Blob ? content : new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
-      addIngredient: (i) =>
-        set((s) => ({
-          inventory: [...s.inventory.filter(x => x.name !== i.name), i],
-        })),
+/* ---------- inventory ---------- */
 
-      removeIngredient: (name) =>
-        set((s) => ({ inventory: s.inventory.filter(x => x.name !== name) })),
+export function inventoryToText(items: IngredientItem[]): string {
+  if (!items.length) return '(no ingredients)';
+  const lines = items.map(i => {
+    const parts = [i.name];
+    if (i.quantity) parts.push(`— ${i.quantity}`);
+    if (i.expiresOn) parts.push(`expires ${i.expiresOn}`);
+    if (i.category) parts.push(`[${i.category}]`);
+    return parts.join(' ');
+  });
+  return `SmartChef Inventory\nExported: ${new Date().toISOString()}\n\n${lines.join('\n')}`;
+}
 
-      setInventory: (items) => set({ inventory: items }),
+export function exportInventoryJSON(items: IngredientItem[]) {
+  const envelope = makeEnvelope<InventoryData>('inventory', { items });
+  downloadFile(
+    `smartchef-inventory-${new Date().toISOString().slice(0, 10)}.json`,
+    JSON.stringify(envelope, null, 2)
+  );
+}
 
-      upsertRecipe: (r) =>
-        set((s) => ({
-          recipes: [...s.recipes.filter(x => x.id !== r.id), r],
-        })),
+/* ---------- recipes ---------- */
 
-      removeRecipe: (id) =>
-        set((s) => ({ recipes: s.recipes.filter(r => r.id !== id) })),
+export function exportRecipesJSON(recipes: Recipe[]) {
+  const envelope = makeEnvelope<Recipe[]>('recipes', recipes);
+  downloadFile(
+    `smartchef-recipes-${new Date().toISOString().slice(0, 10)}.json`,
+    JSON.stringify(envelope, null, 2)
+  );
+}
 
-      setRecipes: (recipes) => set({ recipes }),
-
-      clearAll: () => set({ inventory: [], recipes: [] }),
-    }),
-    {
-      name: 'smartchef:v1',
-      // Native localStorage. Do NOT import the `localStorage` npm package —
-      // it's a Node-side polyfill and can shadow the browser global.
-      storage: createJSONStorage(() => window.localStorage),
-      version: 1,
+export function exportAllRecipesTXT(recipes: Recipe[]) {
+  if (!recipes.length) {
+    downloadFile('smartchef-recipes.txt', '(no recipes)');
+    return;
+  }
+  const lines: string[] = [];
+  for (const r of recipes) {
+    lines.push(`# ${r.title}`);
+    lines.push(`  Type: ${r.dish_type} | Cuisine: ${r.cuisine ?? '—'} | Servings: ${r.servings}`);
+    lines.push(`  Prep: ${r.prep_minutes}m | Cook: ${r.cook_minutes}m | Difficulty: ${r.difficulty}`);
+    if (r.dietary_tags.length) lines.push(`  Tags: ${r.dietary_tags.join(', ')}`);
+    lines.push('');
+    lines.push('  Ingredients:');
+    for (const ing of r.ingredients) {
+      lines.push(`    - ${ing.quantity} ${ing.unit} ${ing.item}`);
     }
-  )
-);
+    lines.push('');
+    lines.push('  Steps:');
+    r.steps.forEach((s, i) => lines.push(`    ${i + 1}. ${s}`));
+    if (r.notes) lines.push(`\n  Notes: ${r.notes}`);
+    lines.push('\n---\n');
+  }
+  downloadFile(`smartchef-recipes-${new Date().toISOString().slice(0, 10)}.txt`, lines.join('\n'));
+}
+
+/* ---------- bundle ---------- */
+
+export function exportBundleJSON(inventory: InventoryData, recipes: Recipe[]) {
+  const bundle: BundleData = { inventory, recipes };
+  const envelope = makeEnvelope<BundleData>('bundle', bundle);
+  downloadFile(
+    `smartchef-backup-${new Date().toISOString().slice(0, 10)}.json`,
+    JSON.stringify(envelope, null, 2)
+  );
+}

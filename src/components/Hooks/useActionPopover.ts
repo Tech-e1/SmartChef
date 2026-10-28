@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { call_api, playAudio } from '../../utils/utils';
-import { ExtendedRecipe } from '../../types';
+import { Recipe } from '@/types/smartchef';
 
 interface UseActionPopoverReturn {
   handleClone: () => void;
@@ -17,7 +17,7 @@ interface UseActionPopoverReturn {
 }
 
 export default function useActionPopover(
-  recipe: ExtendedRecipe | null,
+  recipe: Recipe | null,
   updateRecipe: (audioLink: string) => void
 ): UseActionPopoverReturn {
   const router = useRouter();
@@ -32,14 +32,14 @@ export default function useActionPopover(
     router.push({
       pathname: '/CreateRecipe',
       query: {
-        oldIngredients: recipe.ingredients.map((i) => i.name),
+        oldIngredients: recipe.ingredients.map((i) => i.item),
       },
     });
   }, [recipe, router]);
 
   const handleCopy = useCallback(async () => {
     if (!recipe) return;
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/RecipeDetail?recipeId=${recipe._id}`;
+    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/RecipeDetail?recipeId=${recipe.id}`;
     await navigator.clipboard.writeText(url);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
@@ -48,10 +48,10 @@ export default function useActionPopover(
   const handlePlayRecipe = useCallback(async () => {
     if (!recipe) return;
 
-    if (recipe.audio) {
+    if (recipe.image?.thumbUrl) {
       setIsLoadingAudio(true);
       try {
-        await playAudio(recipe.audio, audioRef, () => {
+        await playAudio(recipe.image.thumbUrl, audioRef, () => {
           setIsPlayingAudio(false);
         });
         setIsPlayingAudio(true);
@@ -66,7 +66,7 @@ export default function useActionPopover(
         const result = await call_api({
           address: '/api/tts',
           method: 'post',
-          payload: { recipeId: recipe._id },
+          payload: { recipeId: recipe.id },
         });
         if (result.audio) {
           updateRecipe(result.audio);
@@ -100,7 +100,7 @@ export default function useActionPopover(
     if (!recipe) return { message: '', error: 'No recipe to delete' };
     try {
       const result = await call_api({
-        address: `/api/delete-recipe?recipeId=${recipe._id}`,
+        address: `/api/delete-recipe?recipeId=${recipe.id}`,
         method: 'delete',
       });
       return { message: 'Recipe deleted successfully', error: '' };

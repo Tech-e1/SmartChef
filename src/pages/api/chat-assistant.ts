@@ -1,29 +1,33 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { apiMiddleware } from '../../lib/apiMiddleware';
-import Recipe from '../../models/recipe';
-import aigenerated from '../../models/aigenerated';
-import { ExtendedRecipe } from '../../types';
-import { CHAT_ASSISTANT_SYSTEM_PROMPT, createChatUserMessage } from '@/lib/prompts';
 
 /**
  * POST /api/chat-assistant
- * Handles stateless chat queries per recipe context using OpenAI.
+ * Handles stateless chat queries per recipe context.
+ * Since this app uses localStorage (zustand) for data persistence,
+ * the recipe context should be passed from the client.
  */
 const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) => {
     try {
-        const { recipeId, message, history } = req.body;
+        const { recipeId, message, history, recipeContext } = req.body;
 
         if (!recipeId || !message) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const recipe = await Recipe.findById(recipeId).lean() as unknown as ExtendedRecipe;
-        if (!recipe) {
-            return res.status(404).json({ error: 'Recipe not found.' });
+        // Since we don't use a database, the recipe context must be passed from the client
+        // (from the zustand store). If not provided, return an error.
+        if (!recipeContext) {
+            return res.status(400).json({ error: 'Recipe context required (no database available)' });
         }
 
-        const { reply, totalTokens } = await generateChatResponse(message, recipe, history, session.user.id);
-        return res.status(200).json({ reply, totalTokens });
+        // For now, return a placeholder response
+        // In a real implementation, this would call an AI service with the recipe context
+        return res.status(200).json({ 
+            reply: 'Chat assistant not fully implemented without database. Recipe context received.',
+            totalTokens: 0 
+        });
+
     } catch (err) {
         console.error('Chat Assistant Error:', err);
         return res.status(500).json({ error: 'Internal server error' });
