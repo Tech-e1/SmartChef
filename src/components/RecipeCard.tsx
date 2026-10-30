@@ -1,6 +1,6 @@
 import { Switch, Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/24/solid';
-import { Recipe } from '../types/index';
+import { Recipe } from '../types/smartchef';
 import { useState } from 'react';
 
 interface RecipeCardProps {
@@ -16,12 +16,12 @@ const RecipeCard = ({ recipe, handleRecipeSelection, selectedRecipes, showSwitch
     const [isExpanded, setIsExpanded] = useState(false);
     const [showAllInstructions, setShowAllInstructions] = useState(false);
     const initialInstructionCount = 3;
-    const instructionPreview = recipe.instructions.slice(0, initialInstructionCount);
-    const visibleInstructions = isModalView && !showAllInstructions ? instructionPreview : recipe.instructions;
+    const instructionPreview = recipe.steps.slice(0, initialInstructionCount);
+    const visibleInstructions = isModalView && !showAllInstructions ? instructionPreview : recipe.steps;
     const parentClassName = `w-full max-w-md mx-auto bg-white shadow-lg rounded-lg overflow-hidden relative ${removeMargin ? '' : 'mt-10 mb-5'}`;
 
     return (
-        <div className={`${parentClassName} overflow-x-hidden`} key={recipe.name}>
+        <div className={`${parentClassName} overflow-x-hidden`} key={recipe.title}>
             <div className="px-6 py-4 relative">
 
                 {/* === Recipe Title and Optional Switch === */}
@@ -33,21 +33,21 @@ const RecipeCard = ({ recipe, handleRecipeSelection, selectedRecipes, showSwitch
             ${showSwitch ? 'cursor-pointer' : ''}
         `}
                         onClick={() => showSwitch && setIsExpanded(!isExpanded)}
-                        title={!showSwitch ? recipe.name : ''} // Tooltip for non-switch titles
+                        title={!showSwitch ? recipe.title : ''} // Tooltip for non-switch titles
                     >
-                        {recipe.name}
+                        {recipe.title}
                     </div>
 
                     {/* Optional Switch to Select Recipe */}
                     {showSwitch && (
                         <Switch
-                            checked={selectedRecipes.includes(recipe.ollamaPromptId)}
+                            checked={selectedRecipes.includes(recipe.id)}
                             onChange={() =>
-                                handleRecipeSelection ? handleRecipeSelection(recipe.ollamaPromptId) : undefined
+                                handleRecipeSelection ? handleRecipeSelection(recipe.id) : undefined
                             }
                             className={`
                 relative inline-flex flex-shrink-0
-                ${selectedRecipes.includes(recipe.ollamaPromptId) ? 'bg-brand-500' : 'bg-gray-300'}
+                ${selectedRecipes.includes(recipe.id) ? 'bg-brand-500' : 'bg-gray-300'}
                 h-[20px] w-[40px] sm:h-[28px] sm:w-[54px]
                 cursor-pointer rounded-full border-2 border-transparent
                 transition-colors duration-200 ease-in-out focus:outline-none
@@ -59,7 +59,7 @@ const RecipeCard = ({ recipe, handleRecipeSelection, selectedRecipes, showSwitch
                                 className={`
                     pointer-events-none inline-block
                     h-[16px] w-[16px] sm:h-[24px] sm:w-[23px]
-                    ${selectedRecipes.includes(recipe.ollamaPromptId) ? 'translate-x-5 sm:translate-x-7' : 'translate-x-0'}
+                    ${selectedRecipes.includes(recipe.id) ? 'translate-x-5 sm:translate-x-7' : 'translate-x-0'}
                     transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out
                 `}
                             />
@@ -85,7 +85,7 @@ const RecipeCard = ({ recipe, handleRecipeSelection, selectedRecipes, showSwitch
                                         </li>
                                     ))}
                                 </ol>
-                                {isModalView && recipe.instructions.length > initialInstructionCount && (
+                                {isModalView && recipe.steps.length > initialInstructionCount && (
                                     <button
                                         type="button"
                                         className="text-sm font-semibold text-brand-700 hover:text-brand-900"
@@ -110,8 +110,8 @@ const RecipeCard = ({ recipe, handleRecipeSelection, selectedRecipes, showSwitch
                             <DisclosurePanel className="mt-2 px-4 pt-4 pb-2 text-sm leading-relaxed bg-gray-50 border border-gray-200 rounded-lg space-y-2">
                                 <ul className="list-disc ml-5 space-y-2">
                                     {recipe.ingredients.map((ingredient) => (
-                                        <li key={ingredient.name}>
-                                            {`${ingredient.name}${ingredient.quantity ? ` (${ingredient.quantity})` : ''}`}
+                                        <li key={ingredient.item}>
+                                            {`${ingredient.item}${ingredient.quantity ? ` (${ingredient.quantity})` : ''}`}
                                         </li>
                                     ))}
                                 </ul>
@@ -123,7 +123,7 @@ const RecipeCard = ({ recipe, handleRecipeSelection, selectedRecipes, showSwitch
                 {/* === Dietary Preferences === */}
                 <h3 className="mt-4 text-gray-700 font-semibold text-lg">Dietary Preference:</h3>
                 <div className="mb-5 mt-2 flex flex-wrap gap-2">
-                    {recipe.dietaryPreference.map((preference) => (
+                    {recipe.dietary_tags.map((preference) => (
                         <span
                             key={preference}
                             className="bg-purple-100 text-purple-800 text-sm font-medium px-2.5 py-0.5 rounded"
@@ -143,10 +143,7 @@ const RecipeCard = ({ recipe, handleRecipeSelection, selectedRecipes, showSwitch
                             </DisclosureButton>
 
                             <DisclosurePanel className="mt-2 px-4 pt-4 pb-2 text-sm leading-relaxed bg-gray-50 border border-gray-200 rounded-lg space-y-2">
-                                <div><strong>Tips:</strong> {recipe.additionalInformation.tips}</div>
-                                <div><strong>Variations:</strong> {recipe.additionalInformation.variations}</div>
-                                <div><strong>Serving Suggestions:</strong> {recipe.additionalInformation.servingSuggestions}</div>
-                                <div><strong>Nutritional Information:</strong> {recipe.additionalInformation.nutritionalInformation}</div>
+                                <div><strong>Tips:</strong> {recipe.notes}</div>
                             </DisclosurePanel>
                         </>
                     )}

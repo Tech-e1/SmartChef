@@ -1,38 +1,40 @@
-
 import { useState } from 'react';
-import FrontDisplay from './FrontDisplay'
-import Dialog from './Dialog'
+import FrontDisplay from './FrontDisplay';
+import Dialog from './Dialog';
 import { ExtendedRecipe } from '../../types/smartchef';
 
 interface ViewRecipesProps {
-    recipes: ExtendedRecipe[]
-    handleRecipeListUpdate: (r: ExtendedRecipe | null, deleteId?: string) => void
-    lastRecipeRef?: React.RefObject<HTMLDivElement>
+    recipes: ExtendedRecipe[];
+    handleRecipeListUpdate: (r: ExtendedRecipe | null, deleteId?: string) => void;
+    lastRecipeRef?: React.RefObject<HTMLDivElement>;
 }
-const initialDialogContents: ExtendedRecipe | null = null
+
+const initialDialogContents: ExtendedRecipe | null = null;
 
 function ViewRecipes({ recipes, handleRecipeListUpdate, lastRecipeRef }: ViewRecipesProps) {
     const [openDialog, setOpenDialog] = useState(initialDialogContents);
 
     const handleShowRecipe = (recipe: ExtendedRecipe) => {
-        setOpenDialog(recipe)
-    }
-    const removeRecipe = async ({ message, error }:{message: string, error: string}) => {
+        setOpenDialog(recipe);
+    };
+
+    const removeRecipe = async ({ message, error }: { message: string, error: string }) => {
         if (!openDialog) return;
         try {
-            setOpenDialog(null)
+            setOpenDialog(null);
             if (error) {
-                throw new Error(error)
+                throw new Error(error);
             }
             if (message) {
-                handleRecipeListUpdate(null, openDialog.id)
+                handleRecipeListUpdate(null, openDialog.id);
             }
         } catch (error) {
-            console.error(error)
+            console.error(error);
         }
-    }
+    };
 
     if (!recipes.length) return null;
+
     return (
         <>
             <div className="flex justify-center items-center min-h-screen p-5 mb-3">
@@ -53,13 +55,13 @@ function ViewRecipes({ recipes, handleRecipeListUpdate, lastRecipeRef }: ViewRec
                 close={() => setOpenDialog(null)}
                 recipe={openDialog}
                 removeRecipe={removeRecipe}
-                handleRecipeListUpdate={(args)=>{
-                    handleRecipeListUpdate(args)
-                    setOpenDialog(args)
+                handleRecipeListUpdate={(args) => {
+                    handleRecipeListUpdate(args);
+                    setOpenDialog(args);
                 }}
             />
         </>
-    )
+    );
 }
 
 export default ViewRecipes;

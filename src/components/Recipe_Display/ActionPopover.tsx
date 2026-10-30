@@ -1,6 +1,6 @@
 import { useState, useEffect, ReactElement } from 'react';
 import { createPortal } from 'react-dom';
-import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import Image from 'next/image';
 import {
     XMarkIcon,
@@ -11,12 +11,12 @@ import {
     InformationCircleIcon,
     PlayCircleIcon,
     StopCircleIcon,
-} from '@heroicons/react/16/solid'
-import { ChatBubbleOvalLeftEllipsisIcon } from '@heroicons/react/24/outline'
+} from '@heroicons/react/16/solid';
+import { ChatBubbleOvalLeftEllipsisIcon } from '@heroicons/react/24/outline';
 import DeleteDialog from './DeleteDialog';
 import { useRouter } from 'next/router';
 import audioload from '../../assets/audioload.gif';
-import audioGenerate from '../../assets/audiogenerate.gif'
+import audioGenerate from '../../assets/audiogenerate.gif';
 import { ExtendedRecipe } from '../../types/smartchef';
 
 interface ActionPopoverProps {
@@ -49,7 +49,7 @@ export function ActionPopover({ handlers, states, data }: ActionPopoverProps) {
         if (!handlers.closeDialog) return;
         handlers.closeDialog()
         window.open(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/RecipeDetail?recipeId=${data.recipe._id}`,
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/RecipeDetail?recipeId=${data.recipe.id}`,
             '_blank',
             'noopener,noreferrer'
         )
@@ -102,12 +102,13 @@ export function ActionPopover({ handlers, states, data }: ActionPopoverProps) {
                                 className="group flex w-full items-center gap-2 rounded-lg py-2 px-4 text-gray-700 hover:bg-gray-100 focus:bg-gray-100" onClick={() => {
                                     close()
                                     handlers.handleCopy()
-                                }}>
+                                }}
+                            >
                                 <ClipboardIcon className="h-5 w-5 text-gray-500" />
                                 Copy Link
                             </button>
                             <button
-                                className="group flex w-full items-center gap-2 rounded-lg py-2 px-4 text-gray-700 hover:bg-gray-100 focus:bg-gray-100" onClick={() => router.push(`${process.env.NEXT_PUBLIC_API_BASE_URL}/ChatAssistant?recipeId=${data.recipe._id}`)}>
+                                className="group flex w-full items-center gap-2 rounded-lg py-2 px-4 text-gray-700 hover:bg-gray-100 focus:bg-gray-100" onClick={() => router.push(`${process.env.NEXT_PUBLIC_API_BASE_URL}/ChatAssistant?recipeId=${data.recipe.id}`)}>
                                 <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 text-gray-500" />
                                 Chat with Assistant
                             </button>
@@ -124,14 +125,13 @@ export function ActionPopover({ handlers, states, data }: ActionPopoverProps) {
                                 Delete Recipe
                             </button>}
                         </>
-
                     )}
                 </PopoverPanel>
             </Popover>
-            {states.linkCopied && <Alert message={`${data.recipe.name} copied to clipboard!`} />}
+            {states.linkCopied && <Alert message={`${data.recipe.title} copied to clipboard!`} />}
             <DeleteDialog
                 isOpen={states.isDeleteDialogOpen}
-                recipeName={data.recipe.name}
+                recipeName={data.recipe.title}
                 closeDialog={handlers.deleteDialog}
                 deleteRecipe={() => {
                     handlers.deleteDialog();
@@ -139,7 +139,6 @@ export function ActionPopover({ handlers, states, data }: ActionPopoverProps) {
                 }}
             />
         </>
-
     )
 }
 
@@ -150,7 +149,7 @@ export const Alert = ({ message }: { message: string }) => {
         setVisible(true);
         const timer = setTimeout(() => setVisible(false), 2000);
         return () => clearTimeout(timer);
-    }, []);
+    }, [])
 
     const alertContent = (
         <div
@@ -164,9 +163,9 @@ export const Alert = ({ message }: { message: string }) => {
             <InformationCircleIcon className="w-6 h-6 flex-shrink-0 mr-2 text-brand-700" />
             <p className="text-sm sm:text-xs md:text-[12px] leading-tight">{message}</p>
         </div>
-    );
+    )
 
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') return null
 
-    return createPortal(alertContent, document.getElementById('alert-root')!);
-};
+    return createPortal(alertContent, document.getElementById('alert-root')!)
+}

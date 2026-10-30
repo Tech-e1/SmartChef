@@ -12,7 +12,7 @@ const RecipeHeader = ({ recipeData }: RecipeHeaderProps) => (
         {/* Recipe Image using Next.js Image component */}
         <div className="relative w-full h-80">
             <Image
-                src={recipeData.image?.thumbUrl} // Image source from recipe data
+                src={recipeData.image?.thumbUrl || ''} // Image source from recipe data
                 alt={recipeData.title} // Alt text for accessibility
                 fill // Fill the parent container
                 style={{ objectFit: 'cover' }} // Ensure the image covers the container without distortion
