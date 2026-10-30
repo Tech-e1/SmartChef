@@ -29,7 +29,7 @@ export default function RecipeDetail() {
 
 
     const updateRecipe = (audioLink: string) => {
-        setRecipeData((prevRecipdata) => {
+        setRecipeData((prevRecipdata: any) => {
             if (!prevRecipdata) return null; // Ensure we're not working with null
 
             return {
@@ -114,7 +114,7 @@ export default function RecipeDetail() {
                         <div className="mb-4">
                         <h3 className="mb-2">Ingredients</h3> {/* Section title */}
                             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2"> {/* Responsive grid layout */}
-                                {recipeData.ingredients.map((ingredient) => (
+                                {recipeData.ingredients.map((ingredient: any) => (
                                     <li key={ingredient.name} className="flex items-center"> {/* Ingredient item */}
                                         <CheckCircleIcon className="w-5 h-5 text-brand-500 mr-2 flex-shrink-0" /> {/* Icon next to ingredient */}
                                         <span className="text-gray-700">
@@ -132,7 +132,7 @@ export default function RecipeDetail() {
                     <div className="mb-4">
                         <h3 className="mb-2">Instructions</h3> {/* Section title */}
                         <ol className="list-decimal list-inside space-y-4"> {/* Ordered list with spacing */}
-                            {recipeData.instructions.map((step, index) => (
+                            {recipeData.instructions.map((step: string, index: number) => (
                                 <li key={index} className="flex items-start"> {/* Instruction step */}
                                     <span className="font-bold text-gray-800 mr-3">{index + 1}.</span> {/* Step number */}
                                     <p className="text-gray-700">{step}</p> {/* Instruction text */}
@@ -176,7 +176,7 @@ export default function RecipeDetail() {
                     {/* Thumbs up icon */}
                     <div className="flex items-center">
                         <div className="flex flex-wrap items-center gap-2">
-                            {recipeData.likedBy.map((user, idx) => (
+                            {recipeData.likedBy.map((user: any, idx: number) => (
                                 <div key={user._id} className="flex items-center space-x-2"> {/* User item */}
                                     <div className="relative w-8 h-8 rounded-full overflow-hidden"> {/* User avatar container */}
                                         <Image

@@ -4,7 +4,7 @@ import { Button } from '@headlessui/react'
 import { HandThumbUpIcon } from '@heroicons/react/24/outline'
 import { HandThumbUpIcon as HandThumbUpSolid, ArrowRightCircleIcon } from '@heroicons/react/24/solid'
 import { call_api } from "../../utils/utils";
-import { ExtendedRecipe } from '../../types';
+import { ExtendedRecipe } from '../../types/smartchef';
 
 
 interface FrontDisplayProps {
@@ -40,9 +40,9 @@ const FrontDisplay = React.forwardRef<HTMLDivElement, FrontDisplayProps>(
         <div ref={ref} className="recipe-card max-w-sm bg-gradient-to-r from-slate-200 to-stone-100 border border-gray-200 rounded-lg shadow-lg mt-4 mb-2 transform transition-transform hover:scale-105 hover:shadow-lg flex flex-col h-full animate-fadeInUp">
             <div className="relative w-full h-64"> {/* Add a container for the image */}
                 <Image
-                    src={recipe.imgLink}
+                    src={recipe.image?.thumbUrl}
                     fill
-                    alt={recipe.name}
+                    alt={recipe.title}
                     style={{ objectFit: 'cover' }}
                     className="rounded-t-lg"
                     priority
@@ -50,12 +50,12 @@ const FrontDisplay = React.forwardRef<HTMLDivElement, FrontDisplayProps>(
                 />
             </div>
             <div className="p-5 flex-grow">
-                <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 drop-shadow-lg">{recipe.name}</h5>
-                <p className="font-normal text-gray-700 dark:text-gray-400">{recipe.additionalInformation.nutritionalInformation}</p>
+                <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 drop-shadow-lg">{recipe.title}</h5>
+                <p className="font-normal text-gray-700 dark:text-gray-400">{recipe.notes}</p>
             </div>
             <div className="mx-auto flex">
                 {
-                    recipe.dietaryPreference.map((preference) => (
+                    recipe.dietary_tags.map((preference: string) => (
                         <span key={preference} className="chip bg-brand-100 text-brand-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded hover:scale-110">{preference}</span>
                     ))
                 }
@@ -71,7 +71,7 @@ const FrontDisplay = React.forwardRef<HTMLDivElement, FrontDisplayProps>(
                     </Button>
                     <Button
                         className="py-1.5 px-3 hover:text-brand-600 hover:scale-105 hover:shadow text-center border border-gray-300 rounded-md border-gray-400 h-8 text-sm flex items-center gap-1 lg:gap-2"
-                        onClick={() => handleRecipeLike(recipe._id)}
+                        onClick={() => handleRecipeLike(recipe.id)}
                         disabled={recipe.owns}
                         data-testid="like_button"
                     >

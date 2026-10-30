@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { call_api } from '../../utils/utils';
-import { ExtendedRecipe } from '../../types';
+import { ExtendedRecipe } from '../../types/smartchef';
 
 export const useRecipeData = (recipeId?: string) => {
   const [recipeData, setRecipeData] = useState<ExtendedRecipe | null>(null);

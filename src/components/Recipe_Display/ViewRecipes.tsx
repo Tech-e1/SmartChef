@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import FrontDisplay from './FrontDisplay'
 import Dialog from './Dialog'
-import { ExtendedRecipe } from '../../types';
+import { ExtendedRecipe } from '../../types/smartchef';
 
 interface ViewRecipesProps {
     recipes: ExtendedRecipe[]
@@ -25,7 +25,7 @@ function ViewRecipes({ recipes, handleRecipeListUpdate, lastRecipeRef }: ViewRec
                 throw new Error(error)
             }
             if (message) {
-                handleRecipeListUpdate(null, openDialog._id)
+                handleRecipeListUpdate(null, openDialog.id)
             }
         } catch (error) {
             console.error(error)
@@ -39,7 +39,7 @@ function ViewRecipes({ recipes, handleRecipeListUpdate, lastRecipeRef }: ViewRec
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {recipes.map((recipe, index) => (
                         <FrontDisplay
-                            key={recipe._id}
+                            key={recipe.id}
                             recipe={recipe}
                             showRecipe={handleShowRecipe}
                             updateRecipeList={handleRecipeListUpdate}

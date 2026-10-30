@@ -8,7 +8,7 @@ import Loading from '../Loading';
 import { ActionPopover } from './ActionPopover';
 import UserLink from '../UserLink';
 import { formatDate } from '../../utils/utils';
-import { ExtendedRecipe } from '../../types';
+import { ExtendedRecipe } from '../../types/smartchef';
 
 interface RecipeDialogProps {
     isOpen: boolean;

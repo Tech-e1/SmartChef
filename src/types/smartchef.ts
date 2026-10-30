@@ -40,6 +40,36 @@ export interface Recipe {
   updatedAt: string;
 }
 
+/** Extended recipe with additional UI fields (owner, likedBy, tags, etc.) */
+export interface ExtendedRecipe extends Recipe {
+  owner: {
+    _id: string;
+    name: string;
+    image: string;
+  };
+  likedBy: Array<{
+    _id: string;
+    name: string;
+    image: string;
+  }>;
+  tags?: Array<{
+    _id: string;
+    tag: string;
+  }>;
+  audio?: string;
+  liked?: boolean;
+  owns?: boolean;
+}
+
+/** Notification type for the notifications system */
+export interface NotificationType {
+  _id: string;
+  read: boolean;
+  message: string;
+  recipeId: string;
+  createdAt?: string;
+}
+
 /** Envelope wrapping every export. Version it or you will regret it. */
 export interface ExportEnvelope<T> {
   format: 'smartchef';

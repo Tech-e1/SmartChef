@@ -3,7 +3,7 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router'; // Import for navigation
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
-import { NotificationType } from '../types';
+import { NotificationType } from '../types/smartchef';
 import { call_api, getServerSidePropsUtility, formatDate } from '../utils/utils';
 
 interface NotificationsPageProps {

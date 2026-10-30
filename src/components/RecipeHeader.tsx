@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import UserLink from './UserLink';
 import { formatDate } from '../utils/utils';
-import { ExtendedRecipe } from '../types';
+import { ExtendedRecipe } from '../types/smartchef';
 
 interface RecipeHeaderProps {
     recipeData: ExtendedRecipe;
@@ -12,8 +12,8 @@ const RecipeHeader = ({ recipeData }: RecipeHeaderProps) => (
         {/* Recipe Image using Next.js Image component */}
         <div className="relative w-full h-80">
             <Image
-                src={recipeData.imgLink} // Image source from recipe data
-                alt={recipeData.name} // Alt text for accessibility
+                src={recipeData.image?.thumbUrl} // Image source from recipe data
+                alt={recipeData.title} // Alt text for accessibility
                 fill // Fill the parent container
                 style={{ objectFit: 'cover' }} // Ensure the image covers the container without distortion
                 className="transform hover:scale-105 transition-transform duration-300" // Add hover effect for scaling
@@ -22,7 +22,7 @@ const RecipeHeader = ({ recipeData }: RecipeHeaderProps) => (
         </div>
         <div className="pl-6 pt-6 pr-6">
             {/* Recipe Title */}
-            <h2 className="text-2xl font-bold mb-2 mt-2">{recipeData.name}</h2> {/* Title with styling */}
+            <h2 className="text-2xl font-bold mb-2 mt-2">{recipeData.title}</h2> {/* Title with styling */}
 
             {/* Owner Information */}
             <div className="flex items-center mb-6">
@@ -48,7 +48,7 @@ const RecipeHeader = ({ recipeData }: RecipeHeaderProps) => (
             <div className="mb-0">
                 <h3 className="text-xl font-semibold mb-2">Dietary Preferences</h3> {/* Section title */}
                 <div className="flex flex-wrap gap-2"> {/* Flex container with wrapping and gap */}
-                    {recipeData.dietaryPreference.map((preference) => (
+                    {recipeData.dietary_tags.map((preference: string) => (
                         <span
                             key={preference} // Unique key for each preference
                             className="bg-purple-100 text-purple-800 text-sm font-medium px-3 py-1 rounded-full" // Badge styling

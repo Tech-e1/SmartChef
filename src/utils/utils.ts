@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useSession } from '@/contexts/SessionContext';
-import { ExtendedRecipe, PaginationQueryType } from "../types";
+import { ExtendedRecipe } from "../types/smartchef";
+import { PaginationQueryType } from "../types";
 import { GetServerSidePropsContext } from "next";
 
 // Filters the results by enhancing recipe information with ownership and liked status for the user
@@ -13,9 +14,9 @@ export const filterResults = (recipes: ExtendedRecipe[], userId: string) => {
         name: recipe.owner.name,
         image: recipe.owner.image
       },
-      likedBy: recipe.likedBy.map(({ _id, name, image }) => ({ _id, name, image })), // Simplifies likedBy list
+      likedBy: recipe.likedBy.map(({ _id, name, image }: { _id: string; name: string; image: string }) => ({ _id, name, image })), // Simplifies likedBy list
       owns: recipe.owner._id.toString() === userId, // Flags if the recipe belongs to the user
-      liked: recipe.likedBy.some(l => l._id.toString() === userId) // Flags if the user liked the recipe
+      liked: recipe.likedBy.some((l: { _id: string }) => l._id.toString() === userId) // Flags if the user liked the recipe
     }
   ))
 }
@@ -27,10 +28,10 @@ export const updateRecipeList = (
   deleteId?: string
 ) => {
   if (!newRecipe && !deleteId) return oldList
-  const id = newRecipe ? newRecipe._id : deleteId;
+  const id = newRecipe ? newRecipe.id : deleteId;
   return newRecipe
-    ? oldList.map(recipe => (recipe._id === id ? newRecipe : recipe))
-    : oldList.filter(recipe => recipe._id !== id);
+    ? oldList.map(recipe => (recipe.id === id ? newRecipe : recipe))
+    : oldList.filter(recipe => recipe.id !== id);
 };
 
 // Utility to fetch data on server-side while ensuring user authentication

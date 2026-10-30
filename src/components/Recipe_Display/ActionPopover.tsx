@@ -17,7 +17,7 @@ import DeleteDialog from './DeleteDialog';
 import { useRouter } from 'next/router';
 import audioload from '../../assets/audioload.gif';
 import audioGenerate from '../../assets/audiogenerate.gif'
-import { ExtendedRecipe } from '../../types';
+import { ExtendedRecipe } from '../../types/smartchef';
 
 interface ActionPopoverProps {
     handlers: {

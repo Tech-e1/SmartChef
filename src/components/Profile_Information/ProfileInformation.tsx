@@ -1,6 +1,6 @@
 import { useSession } from '@/contexts/SessionContext';
 import Image from 'next/image';
-import { ExtendedRecipe } from '../../types';
+import { ExtendedRecipe } from '../../types/smartchef';
 import { Button } from '@headlessui/react';
 
 interface ProfileInformationProps {

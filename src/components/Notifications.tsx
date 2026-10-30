@@ -5,7 +5,7 @@ import { CheckIcon } from '@heroicons/react/24/solid';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import useWindowSize from './Hooks/useWindowSize';
 import { call_api } from '../utils/utils';
-import { NotificationType } from '../types';
+import { NotificationType } from '../types/smartchef';
 
 interface NotificationProps {
     screen?: string;

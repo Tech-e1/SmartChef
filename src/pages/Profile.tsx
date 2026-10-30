@@ -4,7 +4,7 @@ import ProfileInformation from '../components/Profile_Information/ProfileInforma
 import ProfileStickyBanner from '../components/Profile_Information/ProfileStickyBanner';
 import ViewRecipes from '../components/Recipe_Display/ViewRecipes';
 import { getServerSidePropsUtility, updateRecipeList } from '../utils/utils';
-import { ExtendedRecipe } from '../types';
+import { ExtendedRecipe } from '../types/smartchef';
 
 interface ProfileProps {
     profileData: {

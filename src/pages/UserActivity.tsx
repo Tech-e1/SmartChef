@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Loading from '../components/Loading';
 import ErrorPage from './auth/error';
-import { ExtendedRecipe } from '../types';
+import { ExtendedRecipe } from '../types/smartchef';
 import { call_api } from '../utils/utils';
 import ViewRecipes from '../components/Recipe_Display/ViewRecipes';
 
@@ -58,22 +58,22 @@ export default function UserActivityPage() {
             // Update a recipe
             if (activeTab === 'created') {
                 setCreatedRecipes((prev) =>
-                    prev.map((recipe) => recipe._id === updatedRecipe._id ? updatedRecipe : recipe)
+                    prev.map((recipe) => recipe.id === updatedRecipe.id ? updatedRecipe : recipe)
                 );
             } else {
                 setLikedRecipes((prev) =>
-                    prev.map((recipe) => recipe._id === updatedRecipe._id ? updatedRecipe : recipe)
+                    prev.map((recipe) => recipe.id === updatedRecipe.id ? updatedRecipe : recipe)
                 );
             }
         } else if (deleteId) {
             // Delete a recipe
             if (activeTab === 'created') {
                 setCreatedRecipes((prev) =>
-                    prev.filter((recipe) => recipe._id !== deleteId)
+                    prev.filter((recipe) => recipe.id !== deleteId)
                 );
             } else {
                 setLikedRecipes((prev) =>
-                    prev.filter((recipe) => recipe._id !== deleteId)
+                    prev.filter((recipe) => recipe.id !== deleteId)
                 );
             }
         }
