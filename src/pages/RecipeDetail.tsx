@@ -11,7 +11,7 @@ import Loading from "../components/Loading";
 import ErrorPage from "./auth/error";
 import { call_api } from "../utils/utils";
 
-const getThumbsup = ({ liked, owns }: { liked: boolean, owns: boolean }) => {
+const getThumbsup = ({ liked, owns }: { liked?: boolean, owns?: boolean }) => {
     const baseClass = "size-8";
     if (owns) {
         return <HandThumbUpSolid className={`${baseClass} text-gray-500`} />;
@@ -132,7 +132,7 @@ export default function RecipeDetail() {
                     <div className="mb-4">
                         <h3 className="mb-2">Instructions</h3> {/* Section title */}
                         <ol className="list-decimal list-inside space-y-4"> {/* Ordered list with spacing */}
-                            {recipeData.instructions.map((step: string, index: number) => (
+                            {recipeData.steps.map((step: string, index: number) => (
                                 <li key={index} className="flex items-start"> {/* Instruction step */}
                                     <span className="font-bold text-gray-800 mr-3">{index + 1}.</span> {/* Step number */}
                                     <p className="text-gray-700">{step}</p> {/* Instruction text */}
@@ -147,19 +147,19 @@ export default function RecipeDetail() {
                         <div className="space-y-4"> {/* Spacing between info items */}
                             <div>
                                 <h4 className="font-bold text-gray-700">Tips:</h4> {/* Subsection title */}
-                                <p className="text-gray-600">{recipeData.additionalInformation.tips}</p> {/* Tips content */}
+                                <p className="text-gray-600">{recipeData.notes}</p> {/* Tips content */}
                             </div>
                             <div>
                                 <h4 className="font-bold text-gray-700">Variations:</h4> {/* Subsection title */}
-                                <p className="text-gray-600">{recipeData.additionalInformation.variations}</p> {/* Variations content */}
+                                <p className="text-gray-600">{recipeData.notes}</p> {/* Variations content */}
                             </div>
                             <div>
                                 <h4 className="font-bold text-gray-700">Serving Suggestions:</h4> {/* Subsection title */}
-                                <p className="text-gray-600">{recipeData.additionalInformation.servingSuggestions}</p> {/* Serving suggestions content */}
+                                <p className="text-gray-600">{recipeData.notes}</p> {/* Serving suggestions content */}
                             </div>
                             <div>
                                 <h4 className="font-bold text-gray-700">Nutritional Information:</h4> {/* Subsection title */}
-                                <p className="text-gray-600">{recipeData.additionalInformation.nutritionalInformation}</p> {/* Nutritional information content */}
+                                <p className="text-gray-600">{recipeData.notes}</p> {/* Nutritional information content */}
                             </div>
                         </div>
                     </div>
@@ -167,7 +167,7 @@ export default function RecipeDetail() {
                     {/* Liked By Section */}
                     <button
                         className="w-14 h-14 mb-3 hover:text-brand-600 hover:scale-105 hover:shadow rounded-full flex items-center justify-center"
-                        onClick={() => handleRecipeLike(recipeData._id)}
+                        onClick={() => handleRecipeLike(recipeData.id)}
                         disabled={recipeData.owns}
                         data-testid="like_button"
                     >

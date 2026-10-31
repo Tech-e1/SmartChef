@@ -1,9 +1,8 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/dom';
 import FloatingActionButtons from '../../src/components/FloatingActionButtons';
 
-describe('FloatingActionButtons', () => {
-  test('renders the floating action buttons', () => {
-    render(<FloatingActionButtons />);
-    expect(screen.getByTestId('floating-action-button')).toBeInTheDocument();
-  });
+test('renders floating action buttons', () => {
+  render(<FloatingActionButtons />);
+  expect(screen.getByText('Floating Action Buttons')).toBeInTheDocument();
 });

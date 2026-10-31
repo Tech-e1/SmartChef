@@ -8,14 +8,14 @@ import Loading from '../Loading';
 import { ActionPopover } from './ActionPopover';
 import UserLink from '../UserLink';
 import { formatDate } from '../../utils/utils';
-import { ExtendedRecipe } from '../../types/smartchef';
+import { Recipe } from '../../types/smartchef';
 
 interface RecipeDialogProps {
     isOpen: boolean;
     close: () => void;
-    recipe: ExtendedRecipe | null;
+    recipe: Recipe | null;
     removeRecipe: ({ message, error }: { message: string, error: string }) => void;
-    handleRecipeListUpdate: (r: ExtendedRecipe | null, deleteId?: string | undefined) => void
+    handleRecipeListUpdate: (r: Recipe | null, deleteId?: string | undefined) => void
 }
 
 export default function RecipeDisplayModal({ isOpen, close, recipe, removeRecipe, handleRecipeListUpdate }: RecipeDialogProps) {

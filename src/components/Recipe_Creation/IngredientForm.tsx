@@ -4,7 +4,8 @@ import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOptio
 import { CheckIcon, ChevronDownIcon, XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 import clsx from 'clsx';
 import NewIngredientDialog from './NewIngredientDialog';
-import { Ingredient, Recipe, IngredientDocumentType } from '../../types/index';
+import { Ingredient, IngredientDocumentType } from '../../types/index';
+import { Recipe } from '../../types/smartchef';
 
 type ComboIngredient = { id: number; name: string };
 

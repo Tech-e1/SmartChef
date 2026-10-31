@@ -1,10 +1,16 @@
 import RecipeDetail from "../../src/pages/RecipeDetail";
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/dom';
 import { useRouter } from 'next/router';
 
-describe('RecipeDetail', () => {
-  test('renders the recipe detail page', () => {
+jest.mock('next/router', () => ({
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    query: {},
+  })),
+}));
+
+test('renders the recipe detail page', () => {
     render(<RecipeDetail />);
     expect(screen.getByText('Recipe Detail')).toBeInTheDocument();
-  });
 });

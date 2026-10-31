@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import FrontDisplay from './FrontDisplay';
 import Dialog from './Dialog';
-import { ExtendedRecipe } from '../../types/smartchef';
+import { Recipe } from '../../types/smartchef';
 
 interface ViewRecipesProps {
-    recipes: ExtendedRecipe[];
-    handleRecipeListUpdate: (r: ExtendedRecipe | null, deleteId?: string) => void;
+    recipes: Recipe[];
+    handleRecipeListUpdate: (r: Recipe | null, deleteId?: string) => void;
     lastRecipeRef?: React.RefObject<HTMLDivElement>;
 }
 
-const initialDialogContents: ExtendedRecipe | null = null;
+const initialDialogContents: Recipe | null = null;
 
 function ViewRecipes({ recipes, handleRecipeListUpdate, lastRecipeRef }: ViewRecipesProps) {
     const [openDialog, setOpenDialog] = useState(initialDialogContents);
 
-    const handleShowRecipe = (recipe: ExtendedRecipe) => {
+    const handleShowRecipe = (recipe: Recipe) => {
         setOpenDialog(recipe);
     };
 

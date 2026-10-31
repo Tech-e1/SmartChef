@@ -1,10 +1,13 @@
 import { useSession } from "next-auth/react";
 import Hero from "../../src/pages/Hero";
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/dom';
 
-describe('Hero', () => {
-  test('renders the hero page', () => {
+jest.mock("next-auth/react", () => ({
+  useSession: jest.fn(() => ({ data: { user: { name: 'Test User' } } })),
+}));
+
+test('renders the hero page', () => {
     render(<Hero />);
-    expect(screen.getByText('Hero')).toBeInTheDocument();
-  });
+    expect(screen.getByText('SmartChef')).toBeInTheDocument();
 });

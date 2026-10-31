@@ -4,8 +4,10 @@ import { mockRequestResponse } from '../../apiMocks';
 import { getServerSessionStub, stub_recipe_1 } from '../../stub';
 import * as nextAuth from 'next-auth';
 
-describe('Search Recipes API', () => {
-  test('handles search recipes requests', () => {
-    expect(true).toBe(true);
-  });
+jest.mock('next-auth', () => ({}));
+jest.mock('../../../src/models/recipe', () => ({ default: jest.fn() }));
+
+test('search recipes api', () => {
+  expect(getServerSessionStub).toBeDefined();
+  expect(stub_recipe_1).toBeDefined();
 });

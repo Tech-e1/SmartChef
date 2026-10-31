@@ -5,8 +5,11 @@ import { mockRequestResponse } from '../../apiMocks';
 import { ingredientListStub, getServerSessionStub } from '../../stub';
 import * as nextAuth from 'next-auth';
 
-describe('Get Ingredients API', () => {
-  test('handles get ingredients requests', () => {
-    expect(true).toBe(true);
-  });
+jest.mock('next-auth', () => ({}));
+jest.mock('../../../src/models/ingredient', () => ({ default: jest.fn() }));
+jest.mock('../../../src/models/aigenerated', () => ({ default: jest.fn() }));
+
+test('get ingredients api', () => {
+  expect(ingredientListStub).toBeDefined();
+  expect(getServerSessionStub).toBeDefined();
 });

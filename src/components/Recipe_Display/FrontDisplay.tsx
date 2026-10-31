@@ -4,12 +4,12 @@ import { Button } from '@headlessui/react';
 import { HandThumbUpIcon } from '@heroicons/react/24/outline';
 import { HandThumbUpIcon as HandThumbUpSolid, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { call_api } from "../../utils/utils";
-import { ExtendedRecipe } from '../../types/smartchef';
+import { Recipe } from '../../types/smartchef';
 
 interface FrontDisplayProps {
-    recipe: ExtendedRecipe;
-    showRecipe: (recipe: ExtendedRecipe) => void;
-    updateRecipeList: (recipe: ExtendedRecipe) => void;
+    recipe: Recipe;
+    showRecipe: (recipe: Recipe) => void;
+    updateRecipeList: (recipe: Recipe) => void;
 }
 
 const getThumbsup = ({ liked, owns }: { liked?: boolean, owns?: boolean }) => {
@@ -38,14 +38,14 @@ const FrontDisplay = React.forwardRef<HTMLDivElement, FrontDisplayProps>(
             <div ref={ref} className="recipe-card max-w-sm bg-gradient-to-r from-slate-200 to-stone-100 border border-gray-200 rounded-lg shadow-lg mt-4 mb-2 transform transition-transform hover:scale-105 hover:shadow-lg flex flex-col h-full animate-fadeInUp">
                 <div className="relative w-full h-64"> {/* Add a container for the image */}
                     <Image
-                        src={recipe.image?.thumbUrl}
-                        fill
-                        alt={recipe.title}
-                        style={{ objectFit: 'cover' }}
-                        className="rounded-t-lg"
-                        priority
-                        sizes="auto"
-                    />
+                                            src={recipe.image?.thumbUrl || ''}
+                                            fill
+                                            alt={recipe.title}
+                                            style={{ objectFit: 'cover' }}
+                                            className="rounded-t-lg"
+                                            priority
+                                            sizes="auto"
+                                        />
                 </div>
                 <div className="p-5 flex-grow">
                     <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 drop-shadow-lg">{recipe.title}</h5>

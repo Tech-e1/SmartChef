@@ -1,9 +1,9 @@
 import * as apiCalls from "../../../src/utils/utils";
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/dom';
+import NewIngredientDialog from "../../../src/components/Recipe_Creation/NewIngredientDialog";
 
-describe('NewIngredientDialog', () => {
-  test('renders the new ingredient dialog', () => {
+test('renders the new ingredient dialog', () => {
     render(<NewIngredientDialog />);
     expect(screen.getByText('New Ingredient Dialog')).toBeInTheDocument();
-  });
 });

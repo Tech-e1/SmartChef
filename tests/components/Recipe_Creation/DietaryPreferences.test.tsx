@@ -1,9 +1,8 @@
 import DietaryPreferences from "../../../src/components/Recipe_Creation/DietaryPreferences";
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/dom';
 
-describe('DietaryPreferences', () => {
-  test('renders the dietary preferences', () => {
-    render(<DietaryPreferences />);
+test('renders the dietary preferences', () => {
+    render(<DietaryPreferences preferences={[]} updatePreferences={jest.fn()} generatedRecipes={[]} />);
     expect(screen.getByText('Dietary Preferences')).toBeInTheDocument();
-  });
 });

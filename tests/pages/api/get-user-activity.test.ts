@@ -5,8 +5,11 @@ import { mockRequestResponse } from '../../apiMocks';
 import { stubRecipeBatch, getServerSessionStub } from '../../stub';
 import * as nextAuth from 'next-auth';
 
-describe('Get User Activity API', () => {
-  test('handles get user activity requests', () => {
-    expect(true).toBe(true);
-  });
+jest.mock('next-auth', () => ({}));
+jest.mock('../../../src/models/recipe', () => ({ default: jest.fn() }));
+jest.mock('../../../src/models/user', () => ({ default: jest.fn() }));
+
+test('get user activity api', () => {
+  expect(stubRecipeBatch).toBeDefined();
+  expect(getServerSessionStub).toBeDefined();
 });

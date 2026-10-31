@@ -1,9 +1,8 @@
 import LimitReached from "../../../src/components/Recipe_Creation/LimitReached";
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/dom';
 
-describe('LimitReached', () => {
-  test('renders the limit reached', () => {
+test('renders the limit reached', () => {
     render(<LimitReached />);
     expect(screen.getByText('Limit Reached')).toBeInTheDocument();
-  });
 });

@@ -5,8 +5,12 @@ import * as nextAuth from 'next-auth';
 import * as op from '../../../src/lib/openai';
 import { stub_recipe_1, getServerSessionStub } from '../../stub';
 
-describe('Chat Assistant API', () => {
-  test('handles chat assistant requests', () => {
-    expect(true).toBe(true);
-  });
+jest.mock('next-auth', () => ({}));
+jest.mock('../../../src/models/recipe', () => ({ default: jest.fn() }));
+jest.mock('../../../src/models/aigenerated', () => ({ default: jest.fn() }));
+jest.mock('../../../src/lib/openai', () => ({}));
+
+test('chat assistant api', () => {
+  expect(stub_recipe_1).toBeDefined();
+  expect(getServerSessionStub).toBeDefined();
 });

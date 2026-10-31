@@ -17,7 +17,7 @@ import DeleteDialog from './DeleteDialog';
 import { useRouter } from 'next/router';
 import audioload from '../../assets/audioload.gif';
 import audioGenerate from '../../assets/audiogenerate.gif';
-import { ExtendedRecipe } from '../../types/smartchef';
+import { Recipe } from '../../types/smartchef';
 
 interface ActionPopoverProps {
     handlers: {
@@ -36,7 +36,7 @@ interface ActionPopoverProps {
         isDeleteDialogOpen: boolean;
     };
     data: {
-        recipe: ExtendedRecipe;
+        recipe: Recipe;
         buttonType: ReactElement;
     };
 }

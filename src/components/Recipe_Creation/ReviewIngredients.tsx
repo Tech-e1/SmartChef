@@ -12,7 +12,8 @@ import {
   GlobeAltIcon,
   HeartIcon,
 } from '@heroicons/react/24/solid';
-import { Ingredient, DietaryPreference, Recipe } from '../../types/index';
+import { Ingredient, DietaryPreference } from '../../types/index';
+import { Recipe } from '../../types/smartchef';
 import useWindowSize from '../Hooks/useWindowSize';
 
 const preferenceIconMap: Record<

@@ -53,7 +53,7 @@ const NotificationsPage = ({ initialNotifications }: NotificationsPageProps) => 
                             </div>
                             <div className="flex-1">
                                 <p className="text-sm">{message}</p>
-                                <p className="text-xs text-gray-400">{formatDate(createdAt)}</p>
+                                <p className="text-xs text-gray-400">{formatDate(createdAt || '')}</p>
                                 <div className="flex space-x-2 mt-1">
                                     {!read && (
                                         <button

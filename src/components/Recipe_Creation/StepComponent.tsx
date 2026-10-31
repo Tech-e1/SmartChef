@@ -1,7 +1,8 @@
 import IngredientForm from './IngredientForm';
 import DietaryPreferences from './DietaryPreferences';
 import ReviewComponent from './ReviewIngredients';
-import { Ingredient, DietaryPreference, Recipe, IngredientDocumentType } from '../../types/index'
+import { Ingredient, DietaryPreference, IngredientDocumentType } from '../../types/index'
+import { Recipe } from '../../types/smartchef'
 
 interface StepComponentProps {
     step: number,

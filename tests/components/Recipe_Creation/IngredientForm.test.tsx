@@ -1,9 +1,8 @@
 import IngredientForm from "../../../src/components/Recipe_Creation/IngredientForm";
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/dom';
 
-describe('IngredientForm', () => {
-  test('renders the ingredient form', () => {
-    render(<IngredientForm />);
+test('renders the ingredient form', () => {
+    render(<IngredientForm ingredientList={[]} ingredients={[]} updateIngredients={jest.fn()} generatedRecipes={[]} />);
     expect(screen.getByText('Ingredient Form')).toBeInTheDocument();
-  });
 });

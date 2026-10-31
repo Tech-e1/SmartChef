@@ -2,7 +2,7 @@ import React from 'react';
 import RecipeCard from '../RecipeCard';
 import { Button } from '@headlessui/react';
 import { CheckIcon } from '@heroicons/react/24/solid';
-import { Recipe } from '../../types/index';
+import { Recipe } from '../../types/smartchef';
 
 interface SelectRecipesComponentProps {
     generatedRecipes: Recipe[];
@@ -21,7 +21,7 @@ const SelectRecipesComponent = ({ generatedRecipes, selectedRecipes, updateSelec
     };
 
     const finalRecipes = generatedRecipes.filter((recipe) =>
-        selectedRecipes.includes(recipe.ollamaPromptId)
+        selectedRecipes.includes(recipe.id)
     );
 
     return (
@@ -30,7 +30,7 @@ const SelectRecipesComponent = ({ generatedRecipes, selectedRecipes, updateSelec
             {/* Responsive Recipe Cards with Spacing */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {generatedRecipes.map((recipe) => (
-                    <div key={recipe.ollamaPromptId}>
+                    <div key={recipe.id}>
                         <RecipeCard
                             recipe={recipe}
                             handleRecipeSelection={handleRecipeSelection}

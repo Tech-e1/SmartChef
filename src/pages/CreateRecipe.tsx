@@ -9,7 +9,8 @@ import ReviewComponent from '../components/Recipe_Creation/ReviewIngredients';
 import SelectRecipesComponent from '../components/Recipe_Creation/SelectRecipes';
 import LimitReached from '../components/Recipe_Creation/LimitReached';
 import { call_api, getServerSidePropsUtility } from '../utils/utils';
-import { Ingredient, DietaryPreference, Recipe, IngredientDocumentType } from '../types/index';
+import { Ingredient, DietaryPreference, IngredientDocumentType } from '../types/index';
+import { Recipe } from '../types/smartchef';
 
 const steps = [
   'Choose Ingredients',
@@ -58,7 +59,7 @@ function Navigation({
       setIsComplete(false);
       setLoadingType('generation');
 
-      const { recipes, ollamaPromptId } = await call_api({
+      const { recipes } = await call_api({
         address: '/api/generate-recipes',
         method: 'post',
         payload: {
@@ -69,7 +70,7 @@ function Navigation({
       let parsedRecipes = JSON.parse(recipes);
       parsedRecipes = parsedRecipes.map((recipe: Recipe, idx: number) => ({
         ...recipe,
-        ollamaPromptId: `${ollamaPromptId}-${idx}`, // Make unique for client key iteration
+        id: recipe.id || `recipe-${idx}`, // Ensure id exists
       }));
 
       setGeneratedRecipes(parsedRecipes);

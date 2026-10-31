@@ -1,10 +1,9 @@
 import NotificationsPage, { getServerSideProps } from "../../src/pages/NotificationsPage";
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/dom';
 import { stubNotifications } from "../stub";
 
-describe('NotificationsPage', () => {
-  test('renders the notifications page', () => {
-    render(<NotificationsPage />);
+test('renders the notifications page', () => {
+    render(<NotificationsPage initialNotifications={stubNotifications} />);
     expect(screen.getByText('Notifications')).toBeInTheDocument();
-  });
 });

@@ -10,7 +10,8 @@ import {
   GlobeAltIcon,
   HeartIcon,
 } from '@heroicons/react/24/solid';
-import { DietaryPreference, Recipe } from '../../types/index';
+import { DietaryPreference } from '../../types/index';
+import { Recipe } from '../../types/smartchef';
 
 const dietaryOptions: DietaryPreference[] = [
   'Vegetarian',

@@ -1,10 +1,9 @@
 import Profile, { getServerSideProps } from "../../src/pages/Profile";
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/dom';
 import { stubRecipeBatch } from "../stub";
 
-describe('Profile', () => {
-  test('renders the profile page', () => {
-    render(<Profile />);
+test('renders the profile page', () => {
+    render(<Profile profileData={stubRecipeBatch} />);
     expect(screen.getByText('Profile')).toBeInTheDocument();
-  });
 });

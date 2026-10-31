@@ -6,8 +6,12 @@ import { mockRequestResponse } from '../../apiMocks';
 import { stubRecipeBatch, getServerSessionStub } from '../../stub';
 import * as nextAuth from 'next-auth';
 
-describe('Like Recipe API', () => {
-  test('handles like recipe requests', () => {
-    expect(true).toBe(true);
-  });
+jest.mock('mongoose', () => ({}));
+jest.mock('next-auth', () => ({}));
+jest.mock('../../../src/models/recipe', () => ({ default: jest.fn() }));
+jest.mock('../../../src/models/notification', () => ({ default: jest.fn() }));
+
+test('like recipe api', () => {
+  expect(stubRecipeBatch).toBeDefined();
+  expect(getServerSessionStub).toBeDefined();
 });

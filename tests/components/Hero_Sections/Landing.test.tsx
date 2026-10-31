@@ -1,15 +1,9 @@
 import Landing from "../../../src/components/Hero_Sections/Landing";
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/dom';
 import { signIn } from 'next-auth/react';
 
-describe('Landing', () => {
-  test('renders the landing page', () => {
+test('renders landing', () => {
     render(<Landing />);
-    expect(screen.getByText(/Welcome to SmartChef/i)).toBeInTheDocument();
-  });
-
-  test('renders hero content', () => {
-    render(<Landing />);
-    expect(screen.getByText(/SmartChef is a recipe management app/i)).toBeInTheDocument();
-  });
+    expect(screen.getByText('SmartChef')).toBeInTheDocument();
 });

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { call_api } from '../../utils/utils';
-import { ExtendedRecipe } from '../../types/smartchef';
+import { Recipe } from '../../types/smartchef';
 
 export const useRecipeData = (recipeId?: string) => {
-  const [recipeData, setRecipeData] = useState<ExtendedRecipe | null>(null);
+  const [recipeData, setRecipeData] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

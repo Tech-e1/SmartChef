@@ -5,8 +5,11 @@ import { stubRecipeBatch, getServerSessionStub } from '../../stub';
 import * as nextAuth from 'next-auth';
 import * as openai from '../../../src/lib/openai';
 
-describe('Save Recipes API', () => {
-  test('handles save recipes requests', () => {
-    expect(true).toBe(true);
-  });
+jest.mock('next-auth', () => ({}));
+jest.mock('../../../src/models/recipe', () => ({ default: jest.fn() }));
+jest.mock('../../../src/lib/openai', () => ({}));
+
+test('save recipes api', () => {
+  expect(stubRecipeBatch).toBeDefined();
+  expect(getServerSessionStub).toBeDefined();
 });

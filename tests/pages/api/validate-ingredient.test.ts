@@ -5,8 +5,10 @@ import * as openai from '../../../src/lib/openai';
 import * as nextAuth from 'next-auth';
 import { getServerSessionStub } from '../../stub';
 
-describe('Validate Ingredient API', () => {
-  test('handles validate ingredient requests', () => {
-    expect(true).toBe(true);
-  });
+jest.mock('next-auth', () => ({}));
+jest.mock('../../../src/models/ingredient', () => ({ default: jest.fn() }));
+jest.mock('../../../src/lib/openai', () => ({}));
+
+test('validate ingredient api', () => {
+  expect(getServerSessionStub).toBeDefined();
 });

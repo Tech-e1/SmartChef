@@ -1,11 +1,11 @@
 import axios from "axios";
 import { useSession } from '@/contexts/SessionContext';
-import { ExtendedRecipe } from "../types/smartchef";
+import { Recipe } from "../types/smartchef";
 import { PaginationQueryType } from "../types";
 import { GetServerSidePropsContext } from "next";
 
 // Filters the results by enhancing recipe information with ownership and liked status for the user
-export const filterResults = (recipes: ExtendedRecipe[], userId: string) => {
+export const filterResults = (recipes: Recipe[], userId: string) => {
   return recipes.map((recipe) => (
     {
       ...recipe,
@@ -23,8 +23,8 @@ export const filterResults = (recipes: ExtendedRecipe[], userId: string) => {
 
 // Updates the recipe list by either replacing or removing a recipe from the list
 export const updateRecipeList = (
-  oldList: ExtendedRecipe[],
-  newRecipe: ExtendedRecipe | null,
+  oldList: Recipe[],
+  newRecipe: Recipe | null,
   deleteId?: string
 ) => {
   if (!newRecipe && !deleteId) return oldList

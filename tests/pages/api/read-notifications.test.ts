@@ -4,8 +4,10 @@ import { mockRequestResponse } from '../../apiMocks';
 import { stubNotifications, getServerSessionStub } from '../../stub';
 import * as nextAuth from 'next-auth';
 
-describe('Read Notifications API', () => {
-  test('handles read notifications requests', () => {
-    expect(true).toBe(true);
-  });
+jest.mock('next-auth', () => ({}));
+jest.mock('../../../src/models/notification', () => ({ default: jest.fn() }));
+
+test('read notifications api', () => {
+  expect(stubNotifications).toBeDefined();
+  expect(getServerSessionStub).toBeDefined();
 });

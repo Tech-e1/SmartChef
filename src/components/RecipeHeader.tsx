@@ -1,10 +1,10 @@
 import Image from 'next/image';
 import UserLink from './UserLink';
 import { formatDate } from '../utils/utils';
-import { ExtendedRecipe } from '../types/smartchef';
+import { Recipe } from '../types/smartchef';
 
 interface RecipeHeaderProps {
-    recipeData: ExtendedRecipe;
+    recipeData: Recipe;
 }
 
 const RecipeHeader = ({ recipeData }: RecipeHeaderProps) => (
