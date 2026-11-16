@@ -1,10 +1,8 @@
-import ViewRecipes from "../../../src/components/Recipe_Display/ViewRecipes";
+import ViewRecipes from '../../../src/components/Recipe_Display/ViewRecipes';
 import { render, screen } from '@testing-library/react';
-import { fireEvent, waitFor } from '@testing-library/dom';
-import * as apiCalls from "../../../src/utils/utils";
-import { Recipe } from '@/types/smartchef';
+import { ExtendedRecipe } from '@/types/smartchef';
 
-const mockRecipes: Recipe[] = [
+const mockRecipes: ExtendedRecipe[] = [
   {
     id: '1',
     title: 'Test Recipe',
@@ -14,7 +12,7 @@ const mockRecipes: Recipe[] = [
     servings: 4,
     prep_minutes: 15,
     cook_minutes: 30,
-    difficulty: 'easy',
+    difficulty: 'easy' as const,
     dietary_tags: ['healthy'],
     ingredients: [{ quantity: 2, unit: 'pcs', item: 'chicken breast' }],
     steps: ['Step 1', 'Step 2'],
@@ -26,7 +24,13 @@ const mockRecipes: Recipe[] = [
   },
 ];
 
-test('renders the view recipes', () => {
-    render(<ViewRecipes recipes={mockRecipes} handleRecipeListUpdate={jest.fn()} />);
-    expect(screen.getByText('View Recipes')).toBeInTheDocument();
+test('ViewRecipes renders', () => {
+  const handleRecipeListUpdate = jest.fn();
+  render(
+    <ViewRecipes
+      recipes={mockRecipes}
+      handleRecipeListUpdate={handleRecipeListUpdate}
+    />
+  );
+  expect(screen.getByText('Test Recipe')).toBeInTheDocument();
 });

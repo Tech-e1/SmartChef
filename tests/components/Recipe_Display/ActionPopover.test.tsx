@@ -1,9 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { fireEvent, within } from '@testing-library/dom';
 import { ActionPopover } from '../../../src/components/Recipe_Display/ActionPopover';
-import { Recipe } from '@/types/smartchef';
+import { ExtendedRecipe } from '@/types/smartchef';
 
-const mockRecipe: Recipe = {
+const mockRecipe: ExtendedRecipe = {
   id: '1',
   title: 'Test Recipe',
   dish_type: 'main',
@@ -12,7 +11,7 @@ const mockRecipe: Recipe = {
   servings: 4,
   prep_minutes: 15,
   cook_minutes: 30,
-  difficulty: 'easy',
+  difficulty: 'easy' as const,
   dietary_tags: ['healthy'],
   ingredients: [{ quantity: 2, unit: 'pcs', item: 'chicken breast' }],
   steps: ['Step 1', 'Step 2'],
@@ -23,26 +22,30 @@ const mockRecipe: Recipe = {
   likedBy: [],
 };
 
-test('renders the action popover', () => {
-    render(<ActionPopover
-        handlers={{
-            handleClone: jest.fn(),
-            handleCopy: jest.fn(),
-            handlePlayRecipe: jest.fn(),
-            deleteDialog: jest.fn(),
-            deleteRecipe: jest.fn(),
-        }}
-        states={{
-            hasAudio: false,
-            isLoadingAudio: false,
-            isPlayingAudio: false,
-            linkCopied: false,
-            isDeleteDialogOpen: false,
-        }}
-        data={{
-            recipe: mockRecipe,
-            buttonType: <span>Menu</span>,
-        }}
-    />);
-    expect(screen.getByText('Action Popover')).toBeInTheDocument();
+test('ActionPopover renders', () => {
+  const handlers = {
+    handleClone: jest.fn(),
+    handleCopy: jest.fn(),
+    handlePlayRecipe: jest.fn(),
+    deleteDialog: jest.fn(),
+    deleteRecipe: jest.fn(),
+  };
+  const states = {
+    hasAudio: false,
+    isLoadingAudio: false,
+    isPlayingAudio: false,
+    linkCopied: false,
+    isDeleteDialogOpen: false,
+  };
+  render(
+    <ActionPopover
+      handlers={handlers}
+      states={states}
+      data={{
+        recipe: mockRecipe,
+        buttonType: <span>Button</span>,
+      }}
+    />
+  );
+  expect(screen.getByText('Clone Ingredients')).toBeInTheDocument();
 });

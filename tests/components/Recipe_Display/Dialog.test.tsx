@@ -1,10 +1,8 @@
-import RecipeDisplayModal from "../../../src/components/Recipe_Display/Dialog";
+import RecipeDisplayModal from '../../../src/components/Recipe_Display/Dialog';
 import { render, screen } from '@testing-library/react';
-import { fireEvent } from '@testing-library/dom';
-import * as apiCalls from "../../../src/utils/utils";
-import { Recipe } from '@/types/smartchef';
+import { ExtendedRecipe } from '@/types/smartchef';
 
-const mockRecipe: Recipe = {
+const mockRecipe: ExtendedRecipe = {
   id: '1',
   title: 'Test Recipe',
   dish_type: 'main',
@@ -13,7 +11,7 @@ const mockRecipe: Recipe = {
   servings: 4,
   prep_minutes: 15,
   cook_minutes: 30,
-  difficulty: 'easy',
+  difficulty: 'easy' as const,
   dietary_tags: ['healthy'],
   ingredients: [{ quantity: 2, unit: 'pcs', item: 'chicken breast' }],
   steps: ['Step 1', 'Step 2'],
@@ -24,7 +22,18 @@ const mockRecipe: Recipe = {
   likedBy: [],
 };
 
-test('renders the dialog', () => {
-    render(<RecipeDisplayModal isOpen={true} close={jest.fn()} recipe={mockRecipe} removeRecipe={jest.fn()} handleRecipeListUpdate={jest.fn()} />);
-    expect(screen.getByText('Dialog')).toBeInTheDocument();
+test('Dialog renders', () => {
+  const close = jest.fn();
+  const removeRecipe = jest.fn();
+  const handleRecipeListUpdate = jest.fn();
+  render(
+    <RecipeDisplayModal
+      isOpen={true}
+      close={close}
+      recipe={mockRecipe}
+      removeRecipe={removeRecipe}
+      handleRecipeListUpdate={handleRecipeListUpdate}
+    />
+  );
+  expect(screen.getByText('Test Recipe')).toBeInTheDocument();
 });

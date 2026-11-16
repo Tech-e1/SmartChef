@@ -1,9 +1,9 @@
-import * as apiCalls from "../../../src/utils/utils";
 import { render, screen } from '@testing-library/react';
-import { fireEvent } from '@testing-library/dom';
-import NewIngredientDialog from "../../../src/components/Recipe_Creation/NewIngredientDialog";
+import NewIngredientDialog from '../../src/components/Recipe_Creation/NewIngredientDialog';
 
 test('renders the new ingredient dialog', () => {
-    render(<NewIngredientDialog />);
-    expect(screen.getByText('New Ingredient Dialog')).toBeInTheDocument();
+  const ingredientList = [];
+  const updateIngredientList = jest.fn();
+  render(<NewIngredientDialog ingredientList={ingredientList} updateIngredientList={updateIngredientList} />);
+  expect(screen.getByText('New Ingredient Dialog')).toBeInTheDocument();
 });
