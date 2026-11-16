@@ -4,12 +4,12 @@ import { Button } from '@headlessui/react';
 import { HandThumbUpIcon } from '@heroicons/react/24/outline';
 import { HandThumbUpIcon as HandThumbUpSolid, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { call_api } from "../../utils/utils";
-import { Recipe } from '../../types/smartchef';
+import { ExtendedRecipe } from '../../types/smartchef';
 
 interface FrontDisplayProps {
-    recipe: Recipe;
-    showRecipe: (recipe: Recipe) => void;
-    updateRecipeList: (recipe: Recipe) => void;
+    recipe: ExtendedRecipe;
+    showRecipe: (recipe: ExtendedRecipe) => void;
+    updateRecipeList: (recipe: ExtendedRecipe) => void;
 }
 
 const getThumbsup = ({ liked, owns }: { liked?: boolean, owns?: boolean }) => {

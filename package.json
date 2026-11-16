@@ -16,16 +16,21 @@
   },
   "dependencies": {
     "@headlessui/react": "^0.0.0-insiders.557c103",
-        "@heroicons/react": "^2.2.0",
-        "axios": "^1.15.2",
+    "@heroicons/react": "^2.2.0",
+    "@testing-library/dom": "^10.4.2",
+    "@types/mongoose": "^5.11.96",
+    "axios": "^1.15.2",
     "cookies-next": "^4.1.1",
+    "mongoose": "^9.12.1",
     "next": "^14.2.35",
+    "next-auth": "^4.24.15",
+    "openai": "^7.57.0",
     "pluralize": "^8.0.0",
     "react": "^18",
     "react-dom": "^18",
     "react-markdown": "^10.1.0",
     "uuid": "^10.0.0",
-        "zustand": "^5.0.15"
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",

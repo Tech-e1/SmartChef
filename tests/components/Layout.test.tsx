@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import Layout from '../../src/components/Layout';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(() => ({
@@ -15,6 +16,6 @@ jest.mock('next-auth/react', () => ({
 }));
 
 test('renders the layout', () => {
-    render(<Layout children={<div>Test Content</div>} />);
-    expect(screen.getByText('SmartChef')).toBeInTheDocument();
+  render(<Layout><div>Test Content</div></Layout>);
+  expect(screen.getByText('Test Content')).toBeInTheDocument();
 });

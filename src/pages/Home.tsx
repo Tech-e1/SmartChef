@@ -110,7 +110,7 @@ const Home = () => {
                 </button>
                 <button
                     onClick={() => sortRecipes('popular')}
-                    className={`disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-white flex items-center px-4 py-2 rounded shadow-md transition duration-300 ${sortOption === 'popular' ? 'bg-brand-500 text-white' : 'bg-gray-200 hover:bg-gray-300 hover:shadow-lg"'
+                    className={`disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-white flex items-center px-4 py-2 rounded shadow-md transition duration-300 ${sortOption === 'popular' ? 'bg-brand-500 text-white' : 'bg-gray-200 hover:bg-gray-300 hover:shadow-lg'
                         }`}
                     disabled={Boolean(searchVal.trim())}
                 >

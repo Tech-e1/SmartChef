@@ -1,11 +1,11 @@
 import axios from "axios";
 import { useSession } from '@/contexts/SessionContext';
-import { Recipe } from "../types/smartchef";
-import { PaginationQueryType } from "../types";
+import { ExtendedRecipe } from "@/types/smartchef";
+import { PaginationQueryType } from "@/types";
 import { GetServerSidePropsContext } from "next";
 
 // Filters the results by enhancing recipe information with ownership and liked status for the user
-export const filterResults = (recipes: Recipe[], userId: string) => {
+export const filterResults = (recipes: ExtendedRecipe[], userId: string) => {
   return recipes.map((recipe) => (
     {
       ...recipe,
@@ -23,8 +23,8 @@ export const filterResults = (recipes: Recipe[], userId: string) => {
 
 // Updates the recipe list by either replacing or removing a recipe from the list
 export const updateRecipeList = (
-  oldList: Recipe[],
-  newRecipe: Recipe | null,
+  oldList: ExtendedRecipe[],
+  newRecipe: ExtendedRecipe | null,
   deleteId?: string
 ) => {
   if (!newRecipe && !deleteId) return oldList
@@ -32,7 +32,7 @@ export const updateRecipeList = (
   return newRecipe
     ? oldList.map(recipe => (recipe.id === id ? newRecipe : recipe))
     : oldList.filter(recipe => recipe.id !== id);
-};
+}
 
 // Utility to fetch data on server-side while ensuring user authentication
 export const getServerSidePropsUtility = async (context: GetServerSidePropsContext, address: string, propskey: string = 'recipes') => {
@@ -66,7 +66,7 @@ export const getServerSidePropsUtility = async (context: GetServerSidePropsConte
       },
     };
   }
-};
+}
 
 // REST API call utility supporting multiple HTTP methods
 interface methods {

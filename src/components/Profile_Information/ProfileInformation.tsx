@@ -1,10 +1,10 @@
 import { useSession } from '@/contexts/SessionContext';
 import Image from 'next/image';
-import { Recipe } from '../../types/smartchef';
+import { ExtendedRecipe } from '../../types/smartchef';
 import { Button } from '@headlessui/react';
 
 interface ProfileInformationProps {
-    recipes: Recipe[];
+    recipes: ExtendedRecipe[];
     updateSelection: (s: string) => void;
     selectedDisplay: string;
     AIusage: number;

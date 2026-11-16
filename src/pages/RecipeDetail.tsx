@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import Image from 'next/image';
 import { HandThumbUpIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import { EllipsisHorizontalIcon, HandThumbUpIcon as HandThumbUpSolid } from '@heroicons/react/16/solid'
+import { EllipsisHorizontalIcon, HandThumbUpIcon as HandThumbUpSolid } from '@heroicons/react/16/solid';
 import useActionPopover from "../components/Hooks/useActionPopover";
 import { useRecipeData } from "../components/Hooks/useRecipeData";
 import { ActionPopover } from "../components/Recipe_Display/ActionPopover";
@@ -10,6 +10,11 @@ import UserLink from "../components/UserLink";
 import Loading from "../components/Loading";
 import ErrorPage from "./auth/error";
 import { call_api } from "../utils/utils";
+import { ExtendedRecipe } from "../types/smartchef";
+
+interface ExtendedRecipeWithAudio extends ExtendedRecipe {
+    audio?: string;
+}
 
 const getThumbsup = ({ liked, owns }: { liked?: boolean, owns?: boolean }) => {
     const baseClass = "size-8";
@@ -27,17 +32,16 @@ export default function RecipeDetail() {
     const { recipeId } = router.query as { recipeId?: string }; // Extract recipeId from the URL query parameters
     const { recipeData, loading, error, setRecipeData, setLoading } = useRecipeData(recipeId);
 
-
     const updateRecipe = (audioLink: string) => {
-        setRecipeData((prevRecipdata: any) => {
-            if (!prevRecipdata) return null; // Ensure we're not working with null
+        setRecipeData((prevRecipe: ExtendedRecipe | null) => {
+            if (!prevRecipe) return null;
 
             return {
-                ...prevRecipdata, // Keep all existing properties
+                ...prevRecipe, // Keep all existing properties
                 audio: audioLink, // Update only what's necessary
             };
         });
-    }
+    };
 
     const handleRecipeLike = async (recipeId: string) => {
         try {
@@ -46,7 +50,7 @@ export default function RecipeDetail() {
         } catch (error) {
             console.log(error)
         }
-    }
+    };
 
     const {
         handleClone,
@@ -60,8 +64,6 @@ export default function RecipeDetail() {
         isDeleteDialogOpen
     } = useActionPopover(recipeData, updateRecipe);
 
-
-
     const deleteAndRemoveRecipe = async () => {
         try {
             setLoading(true)
@@ -71,7 +73,7 @@ export default function RecipeDetail() {
         } catch (error) {
             console.error(error)
         }
-    }
+    };
 
     // Render the ErrorPage component if recipeId is not present
     if (!recipeId) return <ErrorPage message="Invalid Recipe" />;
@@ -86,7 +88,7 @@ export default function RecipeDetail() {
         <div className="min-h-screen bg-gray-100 p-4">
             {/* Recipe Card */}
             <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-                <RecipeHeader recipeData={recipeData} /> {/* Recipe header with image and title */}
+                <RecipeHeader recipeData={recipeData} />
                 <div className="p-6">
                     <ActionPopover
                         handlers={{
@@ -125,7 +127,6 @@ export default function RecipeDetail() {
                             </ul>
                         </div>
                     </div>
-
 
 
                     {/* Instructions */}

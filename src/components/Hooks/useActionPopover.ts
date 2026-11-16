@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { call_api, playAudio } from '../../utils/utils';
-import { Recipe } from '@/types/smartchef';
+import { ExtendedRecipe } from '@/types/smartchef';
 
 interface UseActionPopoverReturn {
   handleClone: () => void;
@@ -17,7 +17,7 @@ interface UseActionPopoverReturn {
 }
 
 export default function useActionPopover(
-  recipe: Recipe | null,
+  recipe: ExtendedRecipe | null,
   updateRecipe: (audioLink: string) => void
 ): UseActionPopoverReturn {
   const router = useRouter();
