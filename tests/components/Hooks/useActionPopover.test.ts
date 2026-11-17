@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { useActionPopover } from '../../../src/components/Hooks/useActionPopover';
+import useActionPopover from '../../../src/components/Hooks/useActionPopover';
 import { ExtendedRecipe } from '@/types/smartchef';
 
 const mockRecipe: ExtendedRecipe = {
