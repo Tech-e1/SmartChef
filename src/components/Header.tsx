@@ -20,10 +20,8 @@ function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ')
 }
 
-function handleNavigation(item: { route: string }) {
-    // Simple navigation - in a real app, you might want to use useRouter() here
-    // For now, we'll just log or do nothing since we're fixing the syntax error
-    console.log('Navigating to:', item.route)
+function handleNavigation(item: { route: string }, router: ReturnType<typeof useRouter>) {
+    router.push(item.route);
 }
 
 interface HeaderProps {
@@ -67,7 +65,7 @@ function Header({ user }: HeaderProps) {
                                                     'rounded-md px-3 py-2 text-sm font-medium',
                                                 )}
                                                 aria-current={item.route === router.pathname ? 'page' : undefined}
-                                                onClick={() => handleNavigation(item)}
+                                                onClick={() => handleNavigation(item, router)}
                                             >
                                                 {item.name}
                                             </button>
@@ -113,7 +111,7 @@ function Header({ user }: HeaderProps) {
                                                                 focus ? 'bg-gray-100' : '',
                                                                 'block px-4 py-2 text-sm text-gray-700 w-full text-left',
                                                             )}
-                                                            onClick={() => handleNavigation(item)}
+                                                            onClick={() => handleNavigation(item, router)}
                                                         >
                                                             {item.name}
                                                         </button>
@@ -149,7 +147,7 @@ function Header({ user }: HeaderProps) {
                                         'block rounded-md px-3 py-2 text-base font-medium',
                                     )}
                                     aria-current={item.route === router.pathname ? 'page' : undefined}
-                                    onClick={() => handleNavigation(item)}
+                                    onClick={() => handleNavigation(item, router)}
                                 >
                                     {item.name}
                                 </DisclosureButton>
@@ -191,7 +189,7 @@ function Header({ user }: HeaderProps) {
                                     <DisclosureButton
                                         key={item.name}
                                         className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-brand-700 hover:text-white"
-                                        onClick={() => handleNavigation(item)}
+                                        onClick={() => handleNavigation(item, router)}
                                     >
                                         {item.name}
                                     </DisclosureButton>

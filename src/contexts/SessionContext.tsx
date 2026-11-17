@@ -21,7 +21,10 @@ interface SessionContextType {
 const SessionContext = createContext<SessionContextType | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+  // Offline self-hosted app: start with a default session so the header/nav always renders
+  const [session, setSession] = useState<Session | null>({
+    user: { id: 'offline', name: 'Offline User', email: null, image: '/logo.svg' },
+  });
 
   useEffect(() => {
     // Check for existing session in localStorage
