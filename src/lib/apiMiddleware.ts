@@ -14,14 +14,10 @@ export function apiMiddleware(allowedMethods: string[], handler: (req: NextApiRe
                 return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
             }
 
-            // Simple session check - in a real app, you'd validate a JWT or session cookie
-            // For now, we'll just pass a mock session or check for a session cookie
+            // Offline self-hosted app: no real auth backend, so pass a mock session
+            // when no session cookie is present instead of rejecting with 401.
             const sessionCookie = req.cookies?.session;
-            const session = sessionCookie ? JSON.parse(sessionCookie) : null;
-            
-            if (!session) {
-                return res.status(401).json({ error: 'You must be logged in.' });
-            }
+            const session = sessionCookie ? JSON.parse(sessionCookie) : { user: { id: 'offline', name: 'Offline User' } };
 
             // Proceed with the actual handler
             await handler(req, res, session);

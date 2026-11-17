@@ -86,14 +86,7 @@ interface RESTcallTypes {
 
 export const call_api = async ({ address, method = 'get', payload }: RESTcallTypes) => {
   try {
-    // Read session from localStorage and send it as a cookie for auth middleware
-    const sessionCookie = typeof window !== 'undefined' ? localStorage.getItem('session') : null;
-    const headers: Record<string, string> = {};
-    if (sessionCookie) {
-      headers.Cookie = `session=${sessionCookie}`;
-    }
-
-    const { data } = await axios[method as keyof methods](address, payload, { headers });
+    const { data } = await axios[method as keyof methods](address, payload);
     return data; // Returns the data from the API call
   } catch (error) {
     console.error(`An error occurred making a ${method} REST call to -> ${address} error -> ${error}`);

@@ -4,7 +4,6 @@ import SearchBar from '../components/SearchBar';
 import ViewRecipes from '../components/Recipe_Display/ViewRecipes';
 import FloatingActionButtons from '../components/FloatingActionButtons';
 import Loading from '../components/Loading';
-import PopularTags from '../components/PopularTags';
 import { usePagination } from '../components/Hooks/usePagination';
 
 const Home = () => {
@@ -22,7 +21,6 @@ const Home = () => {
     const {
         data: latestRecipes,
         loading,
-        popularTags,
         loadMore,
         handleRecipeListUpdate,
         totalRecipes,
@@ -82,20 +80,9 @@ const Home = () => {
         setSearchTrigger(true);
     };
 
-    const handleTagSearch = async (tag: string) => {
-        if (searchVal === tag) {
-            setSearchVal(""); // Reset search if clicking the same tag
-            return;
-        }
-
-        setSearchVal(tag);
-        setSearchTrigger(true);
-    };
-
     return (
         <div className="flex flex-col min-h-screen items-center px-4 py-8 space-y-8">
             <SearchBar searchVal={searchVal} setSearchVal={setSearchVal} handleSearch={handleSearch} totalRecipes={totalRecipes} />
-            <PopularTags tags={popularTags} onTagToggle={handleTagSearch} searchVal={searchVal} />
 
             {/* Sorting Buttons */}
             <div className="flex space-x-4 mt-4 mb-4">
