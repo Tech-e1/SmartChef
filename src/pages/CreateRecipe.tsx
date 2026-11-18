@@ -43,6 +43,7 @@ function Navigation({
   const [isLoading, setIsLoading] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [loadingType, setLoadingType] = useState<'generation' | 'saving'>('generation')
+  const [generationError, setGenerationError] = useState<string | null>(null)
 
   const router = useRouter();
   const { oldIngredients } = router.query;
@@ -57,6 +58,7 @@ function Navigation({
 
 
   const handleIngredientSubmit = async () => {
+    setGenerationError(null);
     try {
       setIsLoading(true);
       setIsComplete(false);
@@ -82,9 +84,12 @@ function Navigation({
         setIsLoading(false);
         setStep(step + 1);
       }, 500); // Smooth transition after completion
-    } catch (error) {
-      console.log(error);
-      setIsLoading(false);
+    } catch (error: any) {
+      setIsComplete(true); // Finish the progress bar so it doesn't stick at 90%
+      setGenerationError(error.message || 'Failed to generate recipes. Please check your NVIDIA API key and try again.');
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
     }
   };
 
@@ -109,9 +114,12 @@ function Navigation({
         setStep(0);
         router.push('/Profile');
       }, 500);
-    } catch (error) {
-      console.log(error);
-      setIsLoading(false);
+    } catch (error: any) {
+      setIsComplete(true); // Finish the progress bar so it doesn't stick at 90%
+      setGenerationError(error.message || 'Failed to save recipes. Please try again.');
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
     }
   };
 
@@ -153,6 +161,11 @@ function Navigation({
                       handleIngredientSubmit={handleIngredientSubmit}
                       generatedRecipes={generatedRecipes}
                     />
+                  )}
+                  {generationError && (
+                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+                      {generationError}
+                    </div>
                   )}
                 </div>
               )}
