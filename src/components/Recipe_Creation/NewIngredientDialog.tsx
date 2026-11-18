@@ -5,10 +5,7 @@ import {
   Button, Input, Field, Label
 } from '@headlessui/react';
 import { PlusCircleIcon } from '@heroicons/react/24/solid';
-import pluralize from 'pluralize';
 import clsx from 'clsx';
-import { call_api } from '../../utils/utils';
-import Loading from '../Loading';
 import { IngredientDocumentType } from '../../types/index';
 
 interface NewIngredientDialogProps {
@@ -19,80 +16,46 @@ interface NewIngredientDialogProps {
 function NewIngredientDialog({ ingredientList, updateIngredientList }: NewIngredientDialogProps) {
   const [isOpen, setIsOpen] = useState(false); // State to manage dialog visibility
   const [ingredientName, setIngredientName] = useState(''); // State to manage the ingredient name input
-  const [isLoading, setIsLoading] = useState(false); // State to manage the loading state
   const [message, setMessage] = useState(''); // State to manage feedback messages
-  const [isDisabled, setIsDisabled] = useState(false); // State to manage the disabled state of the submit button
-  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   useEffect(() => {
     setIngredientName('');
     setMessage('');
-    setSuggestions([]);
-  }, [isOpen]); // Reset ingredient name and message when dialog is opened/closed
+  }, [isOpen]); // Reset ingredient name when dialog is opened/closed
 
   // Handle input change for the ingredient name
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIngredientName(e.target.value);
     setMessage('');
-    setIsDisabled(false);
-    setSuggestions([]);
   };
 
   // Handle form submission
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!ingredientName.trim()) return;
     if (ingredientName.trim().length > 20) {
       setMessage('This ingredient name is too long!');
-      setIsDisabled(true);
       return;
     }
 
-    const ingredient = ingredientName.trim().toLowerCase();
-    const availableIngredients = ingredientList.map(i => i.name.toLowerCase());
-    const pluralizedIngredient = pluralize(ingredient);
-    const singularizedIngredient = pluralize.singular(ingredient);
-    const isAvailable = availableIngredients.includes(ingredient) ||
-      availableIngredients.includes(pluralizedIngredient) ||
-      availableIngredients.includes(singularizedIngredient);
+    const ingredient = ingredientName.trim();
+    const isDuplicate = ingredientList.some(i =>
+      i.name.toLowerCase() === ingredient.toLowerCase()
+    );
 
-    if (isAvailable) {
+    if (isDuplicate) {
       setMessage('This ingredient is already available');
-      setIsDisabled(true);
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const response = await call_api({ address: '/api/validate-ingredient', method: 'post', payload: { ingredientName: ingredientName.trim() } });
-      const { message: responseMessage, error } = response;
+    const newIngredient: IngredientDocumentType = {
+      _id: crypto.randomUUID?.() || Math.random().toString(36).slice(2),
+      name: ingredient,
+      createdBy: null,
+      createdAt: new Date().toISOString(),
+    };
 
-      if (error) {
-        throw new Error(error)
-      }
-
-      if (responseMessage === 'Success') {
-        const possibleSuggestions = response.suggested.join(', ');
-        setMessage(`Successfully added: ${response.newIngredient.name}${possibleSuggestions ? `\nAdditional suggestions: ${possibleSuggestions}` : ''}`);
-        updateIngredientList(response.newIngredient);
-        setIngredientName('');
-        setSuggestions([]);
-      } else if (responseMessage === 'Invalid') {
-        const possibleSuggestions = response.suggested || [];
-        setSuggestions(possibleSuggestions);
-        setMessage(`${ingredientName} is invalid.`);
-        setIngredientName('');
-      } else {
-        setMessage(`An error occurred with validation... check back later: ${responseMessage}`);
-        setIngredientName('');
-        setSuggestions([]);
-      }
-    } catch (error) {
-      console.error(error);
-      setMessage('Failed to add ingredient');
-      setSuggestions([]);
-    } finally {
-      setIsLoading(false);
-    }
+    updateIngredientList(newIngredient);
+    setIngredientName('');
   };
 
   return (
@@ -108,7 +71,7 @@ function NewIngredientDialog({ ingredientList, updateIngredientList }: NewIngred
         <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
           <DialogPanel className="max-w-lg space-y-4 border bg-white p-12 rounded-lg shadow-lg">
             <DialogTitle className="text-xl font-bold">Add New Ingredient</DialogTitle>
-            <Description className="text-sm text-gray-500">If you can&apos;t find your ingredient in the list, enter its name here. We&apos;ll validate it before adding to the database.</Description>
+            <Description className="text-sm text-gray-500">Enter a name for your ingredient and it will be added to your list.</Description>
             <Field className="mb-4">
               <Label htmlFor="ingredientName" className="block text-sm font-medium text-gray-700">Ingredient Name</Label>
               <Input
@@ -126,39 +89,16 @@ function NewIngredientDialog({ ingredientList, updateIngredientList }: NewIngred
             <div className="text-red-400 font-bold mb-2" style={{ whiteSpace: 'pre-line' }}>
               <span>{message}</span>
             </div>
-            {suggestions.length > 0 && (
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">Try one of these:</p>
-                <div className="flex flex-wrap gap-2">
-                  {suggestions.map((suggestion) => (
-                    <Button
-                      key={suggestion}
-                      type="button"
-                      className="rounded-full bg-brand-100 px-3 py-1 text-sm font-medium text-brand-800 hover:bg-brand-200"
-                      onClick={() => {
-                        setIngredientName(suggestion);
-                        setMessage('');
-                        setSuggestions([]);
-                        setIsDisabled(false);
-                      }}
-                    >
-                      {suggestion}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {isLoading ? <Loading /> :
-              <div className="flex gap-4 flex-end">
+            <div className="flex gap-4 flex-end">
                 <Button className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400" onClick={() => setIsOpen(false)}>Cancel</Button>
                 <Button
-                  className="bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-700 data-[disabled]:bg-gray-200"
+                  className="bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-700"
                   onClick={handleSubmit}
-                  disabled={!ingredientName.trim() || isDisabled}
+                  disabled={!ingredientName.trim()}
                 >
                   Submit
                 </Button>
-              </div>}
+              </div>
           </DialogPanel>
         </div>
       </Dialog>
