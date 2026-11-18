@@ -3,7 +3,7 @@ import { apiMiddleware } from '../../lib/apiMiddleware';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) => {
   try {
-    return res.status(200).json({ user: session?.user || null });
+    return res.status(200).json({ recipes: [], AIusage: 0, user: session?.user || null });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Failed to get profile' });

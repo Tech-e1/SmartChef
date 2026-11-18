@@ -37,17 +37,7 @@ export const updateRecipeList = (
 // Utility to fetch data on server-side while ensuring user authentication
 export const getServerSidePropsUtility = async (context: GetServerSidePropsContext, address: string, propskey: string = 'recipes') => {
   try {
-    // Simple session check - look for a session cookie
-    const sessionCookie = context.req.cookies?.session;
-    const session = sessionCookie ? JSON.parse(sessionCookie) : null;
-    if (!session) {
-      return {
-        redirect: {
-          destination: '/',
-          permanent: false,
-        },
-      };
-    }
+    // Offline self-hosted app: proceed without a session instead of redirecting.
     const { data } = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/${address}`, {
       headers: {
         Cookie: context.req.headers.cookie || '',
