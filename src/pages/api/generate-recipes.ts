@@ -25,62 +25,66 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
 
         // Call NVIDIA NIM API (OpenAI-compatible chat completions) with a timeout
                 const nvidiaController = new AbortController();
-                const nvidiaTimeoutId = setTimeout(() => nvidiaController.abort(), 300000);
-        let nvidiaResponse: Response;
-        try {
-            nvidiaResponse = await fetch(`${NVIDIA_CONFIG.baseUrl}/chat/completions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${NVIDIA_CONFIG.apiKey}`,
-                },
-                body: JSON.stringify({
-                    model: NVIDIA_CONFIG.model,
-                    messages: [
-                        { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
-                        { role: 'user', content: createRecipeUserPrompt(ingredients, dietaryPreferences) },
-                    ],
-                    temperature: NVIDIA_CONFIG.temperature,
-                    max_tokens: 4096,
-                }),
-                signal: nvidiaController.signal,
-            });
-        } finally {
-            clearTimeout(nvidiaTimeoutId);
-        }
-
-        if (!nvidiaResponse.ok) {
-            const errorText = await nvidiaResponse.text();
-            console.error('NVIDIA API error:', errorText);
-            throw new Error(`NVIDIA API responded with status ${nvidiaResponse.status}`);
-        }
-
-        const nvidiaData = await nvidiaResponse.json();
-        const responseText = nvidiaData.choices?.[0]?.message?.content || '';
-
-        if (!responseText || !responseText.trim()) {
-            throw new Error('NVIDIA returned an empty response content');
-        }
-
-        // The model is instructed to return pure JSON. Parse it; fall back gracefully if it doesn't.
-        let recipes: any[] = [];
-        try {
-            recipes = JSON.parse(responseText);
-            if (!Array.isArray(recipes)) {
-                recipes = [recipes];
-            }
-        } catch (parseError) {
-            console.error('Failed to parse NVIDIA response as JSON:', parseError);
-            return res.status(500).json({ error: 'Failed to parse generated recipes' });
-        }
-
-        // Respond with the generated recipes as a JSON string (caller does JSON.parse)
-        res.status(200).json({ recipes: JSON.stringify(recipes) });
-    } catch (error) {
-        // Handle any errors that occur during recipe generation
-        console.error(error);
-        res.status(500).json({ error: 'Failed to generate recipes' });
-    }
+                const nvidiaTimeoutId = setTimeout(() => nvidiaController.abort(), 60000);
+                let nvidiaResponse: Response;
+                try {
+                    nvidiaResponse = await fetch(`${NVIDIA_CONFIG.baseUrl}/chat/completions`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${NVIDIA_CONFIG.apiKey}`,
+                        },
+                        body: JSON.stringify({
+                            model: NVIDIA_CONFIG.model,
+                            messages: [
+                                { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
+                                { role: 'user', content: createRecipeUserPrompt(ingredients, dietaryPreferences) },
+                            ],
+                            temperature: NVIDIA_CONFIG.temperature,
+                            max_tokens: 4096,
+                        }),
+                        signal: nvidiaController.signal,
+                    });
+                } finally {
+                    clearTimeout(nvidiaTimeoutId);
+                }
+        
+                if (!nvidiaResponse.ok) {
+                    const errorText = await nvidiaResponse.text();
+                    console.error('NVIDIA API error:', errorText);
+                    throw new Error(`NVIDIA API responded with status ${nvidiaResponse.status}`);
+                }
+        
+                const nvidiaData = await nvidiaResponse.json();
+                const responseText = nvidiaData.choices?.[0]?.message?.content || '';
+        
+                if (!responseText || !responseText.trim()) {
+                            throw new Error('NVIDIA returned an empty response content');
+                        }
+                
+                        // The model is instructed to return pure JSON. Parse it; fall back gracefully if it doesn't.
+                        let recipes: any[] = [];
+                        try {
+                            recipes = JSON.parse(responseText);
+                            if (!Array.isArray(recipes)) {
+                                recipes = [recipes];
+                            }
+                        } catch (parseError) {
+                            console.error('Failed to parse NVIDIA response as JSON:', parseError);
+                            return res.status(500).json({ error: 'Failed to parse generated recipes' });
+                        }
+                
+                        // Respond with the generated recipes as a JSON string (caller does JSON.parse)
+                        res.status(200).json({ recipes: JSON.stringify(recipes) });
+                    } catch (error: any) {
+                        // Distinguish timeout/abort from other errors
+                        if (error.name === 'AbortError') {
+                            console.error('NVIDIA API request timed out after 60 seconds');
+                            return res.status(500).json({ error: 'Recipe generation timed out. The NVIDIA API is slow or unreachable. Please try again.' });
+                        }
+                        console.error(error);
+                        res.status(500).json({ error: error.message || 'Failed to generate recipes' });
+                    }
 };
 
 export default apiMiddleware(['POST'], handler);
