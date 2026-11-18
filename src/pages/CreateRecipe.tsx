@@ -27,11 +27,14 @@ const initialSelectedIds: string[] = [];
 function Navigation({
   recipeCreationData,
 }: {
-  recipeCreationData: {
-    ingredientList: IngredientDocumentType[];
-    reachedLimit: boolean;
+  recipeCreationData?: {
+    ingredientList?: IngredientDocumentType[];
+    reachedLimit?: boolean;
   };
 }) {
+  // Guard against missing/malformed props from getServerSideProps
+  const ingredientList = recipeCreationData?.ingredientList ?? [];
+  const reachedLimit = recipeCreationData?.reachedLimit ?? false;
   const [step, setStep] = useState(0);
   const [ingredients, setIngredients] = useState(initialIngredients);
   const [preferences, setPreferences] = useState(initialPreferences);
@@ -113,7 +116,7 @@ function Navigation({
   };
 
 
-  return recipeCreationData.reachedLimit ? (
+  return reachedLimit ? (
     <LimitReached
       message="You have reached the maximum number of interactions with our AI services. Please try again later."
       actionText="Go to Home"
@@ -141,7 +144,7 @@ function Navigation({
                   ) : (
                     <StepComponent
                       step={idx}
-                      ingredientList={recipeCreationData.ingredientList}
+                      ingredientList={ingredientList}
                       ingredients={ingredients}
                       updateIngredients={setIngredients}
                       preferences={preferences}
