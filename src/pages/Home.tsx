@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { ClockIcon, FireIcon } from '@heroicons/react/24/solid';
+import { ClockIcon } from '@heroicons/react/24/solid';
 import SearchBar from '../components/SearchBar';
 import ViewRecipes from '../components/Recipe_Display/ViewRecipes';
 import FloatingActionButtons from '../components/FloatingActionButtons';
@@ -8,7 +8,7 @@ import { usePagination } from '../components/Hooks/usePagination';
 
 const Home = () => {
     const [searchVal, setSearchVal] = useState('');
-    const [sortOption, setSortOption] = useState<'recent' | 'popular'>('popular');
+    const [sortOption, setSortOption] = useState<'recent' | 'popular'>('recent');
     const [searchTrigger, setSearchTrigger] = useState<true | false>(false);
 
     const observerRef = useRef<IntersectionObserver | null>(null);
@@ -94,15 +94,6 @@ const Home = () => {
                 >
                     <ClockIcon className="h-5 w-5 mr-2" />
                     Most Recent
-                </button>
-                <button
-                    onClick={() => sortRecipes('popular')}
-                    className={`disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-white flex items-center px-4 py-2 rounded shadow-md transition duration-300 ${sortOption === 'popular' ? 'bg-brand-500 text-white' : 'bg-gray-200 hover:bg-gray-300 hover:shadow-lg'
-                        }`}
-                    disabled={Boolean(searchVal.trim())}
-                >
-                    <FireIcon className="h-5 w-5 mr-2" />
-                    Most Popular
                 </button>
             </div>
 
