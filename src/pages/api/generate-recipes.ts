@@ -67,19 +67,73 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
         }
 
         // The model is instructed to return pure JSON. Parse it; fall back gracefully if it doesn't.
-        let recipes: any[] = [];
-        try {
-            recipes = JSON.parse(responseText);
-            if (!Array.isArray(recipes)) {
-                recipes = [recipes];
-            }
-        } catch (parseError) {
-            console.error('Failed to parse NVIDIA response as JSON:', parseError);
-            return res.status(500).json({ error: 'Failed to parse generated recipes' });
-        }
-
-        // Respond with the generated recipes as a JSON string (caller does JSON.parse)
-        res.status(200).json({ recipes: JSON.stringify(recipes) });
+                let recipes: any[] = [];
+                try {
+                    recipes = JSON.parse(responseText);
+                    if (!Array.isArray(recipes)) {
+                        recipes = [recipes];
+                    }
+                } catch (parseError) {
+                    console.error('Failed to parse NVIDIA response as JSON:', parseError);
+                    return res.status(500).json({ error: 'Failed to parse generated recipes' });
+                }
+        
+                // Validate that recipes actually use the requested ingredients
+                const requestedIngredients = ingredients.map((i: string) => i.toLowerCase().trim());
+                const hasOverlap = recipes.some((recipe: any) => {
+                    const recipeIngredients = (recipe.ingredients || []).map((ing: any) => ing.item?.toLowerCase().trim() || '');
+                    return recipeIngredients.some((ri: string) => requestedIngredients.some((req: string) => ri.includes(req) || req.includes(ri)));
+                });
+        
+                if (!hasOverlap) {
+                    console.warn('[NVIDIA] Generated recipe has no overlap with requested ingredients. Retrying once with stricter prompt...');
+                    // Retry once with a stricter prompt
+                    const strictPrompt = `${RECIPE_GENERATION_SYSTEM_PROMPT}\n\n${createRecipeUserPrompt(ingredients, dietaryPreferences)}\n\nCRITICAL: You MUST use the provided ingredients. The recipe ingredients array MUST contain items from the user's list.`;
+                    const retryController = new AbortController();
+                    const retryTimeoutId = setTimeout(() => retryController.abort(), 60000);
+                    let retryResponse: Response;
+                    try {
+                        retryResponse = await fetch(`${NVIDIA_CONFIG.baseUrl}/chat/completions`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${NVIDIA_CONFIG.apiKey}`,
+                            },
+                            body: JSON.stringify({
+                                model: NVIDIA_CONFIG.model,
+                                messages: [
+                                    { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
+                                    { role: 'user', content: strictPrompt },
+                                ],
+                                temperature: NVIDIA_CONFIG.temperature,
+                                max_tokens: 4096,
+                            }),
+                            signal: retryController.signal,
+                        });
+                    } finally {
+                        clearTimeout(retryTimeoutId);
+                    }
+        
+                    if (retryResponse.ok) {
+                        const retryData = await retryResponse.json();
+                        const retryText = retryData.choices?.[0]?.message?.content || '';
+                        if (retryText && retryText.trim()) {
+                            try {
+                                const retryRecipes = JSON.parse(retryText);
+                                if (Array.isArray(retryRecipes)) {
+                                    recipes = retryRecipes;
+                                } else {
+                                    recipes = [retryRecipes];
+                                }
+                            } catch {
+                                // Keep original recipes if retry parse fails
+                            }
+                        }
+                    }
+                }
+        
+                // Respond with the generated recipes as a JSON string (caller does JSON.parse)
+                res.status(200).json({ recipes: JSON.stringify(recipes) });
     } catch (error: any) {
         // Distinguish timeout/abort from other errors
         if (error.name === 'AbortError') {

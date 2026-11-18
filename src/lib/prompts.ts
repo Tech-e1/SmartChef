@@ -47,6 +47,7 @@ CONSTRAINTS:
 - Steps must be numbered, actionable, and sequential
 - Total time = prep_minutes + cook_minutes (should be ≤ 60 for quick meals)
 - Ingredients count: 6-15 items typically
+- EVERY ingredient in the recipe MUST come from the user's provided list. Do not invent or add any ingredient not on the list.
 `;
 
 /**
@@ -62,11 +63,13 @@ export function createRecipeUserPrompt(
     ? `Dietary preferences: ${dietaryPreferences.join(', ')}.`
     : 'No specific dietary restrictions.';
 
-  return `Generate a recipe using these available ingredients:
+  return `Generate a recipe using ONLY the following available ingredients:
 
 ${ingredientList}
 
 ${dietaryList}
+
+You MUST base the recipe on these provided ingredients. Do not substitute, add, or invent ingredients that were not provided. Use a reasonable subset of the provided ingredients.
 
 Output JSON only, following the schema exactly.`;
 }
