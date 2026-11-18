@@ -155,7 +155,7 @@ export const GROQ_CONFIG = {
 export const NVIDIA_CONFIG = {
   apiKey: process.env.NVIDIA_API_KEY,
   baseUrl: 'https://integrate.api.nvidia.com/v1',
-  model: process.env.NVIDIA_MODEL || 'meta/llama-3.1-8b-instruct',
+  model: process.env.NVIDIA_MODEL || 'nvidia/nemotron-3.5-lightning-30b-a3b',
   temperature: 0.7,
 };
 
