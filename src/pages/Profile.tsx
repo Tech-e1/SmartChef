@@ -14,7 +14,7 @@ interface ProfileProps {
 }
 
 function Profile({ profileData }: ProfileProps) {
-    const [latestRecipes, setLatestRecipes] = useState(profileData.recipes);
+    const [latestRecipes, setLatestRecipes] = useState(profileData?.recipes ?? []);
     const [displaySetting, setDisplaySetting] = useState('created')
 
     const handleRecipeListUpdate = (recipe: ExtendedRecipe | null, deleteId?: string) => {
@@ -40,7 +40,7 @@ function Profile({ profileData }: ProfileProps) {
                 recipes={latestRecipes}
                 updateSelection={(val) => setDisplaySetting(val)}
                 selectedDisplay={displaySetting}
-                AIusage={profileData.AIusage}
+                AIusage={profileData?.AIusage ?? 0}
             />
             <ViewRecipes recipes={handleDisplaySetting()} handleRecipeListUpdate={handleRecipeListUpdate} />
         </div>
