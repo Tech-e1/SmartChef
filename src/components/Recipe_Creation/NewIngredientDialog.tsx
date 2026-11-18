@@ -56,6 +56,7 @@ function NewIngredientDialog({ ingredientList, updateIngredientList }: NewIngred
 
     updateIngredientList(newIngredient);
     setIngredientName('');
+    setIsOpen(false); // Close dialog after successful submission
   };
 
   return (
