@@ -24,8 +24,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
         const prompt = `${RECIPE_GENERATION_SYSTEM_PROMPT}\n\n${createRecipeUserPrompt(ingredients, dietaryPreferences)}`;
 
         // Call NVIDIA NIM API (OpenAI-compatible chat completions) with a timeout
-        const nvidiaController = new AbortController();
-        const nvidiaTimeoutId = setTimeout(() => nvidiaController.abort(), 120000);
+                const nvidiaController = new AbortController();
+                const nvidiaTimeoutId = setTimeout(() => nvidiaController.abort(), 300000);
         let nvidiaResponse: Response;
         try {
             nvidiaResponse = await fetch(`${NVIDIA_CONFIG.baseUrl}/chat/completions`, {

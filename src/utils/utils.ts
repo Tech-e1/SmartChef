@@ -37,8 +37,12 @@ export const updateRecipeList = (
 // Utility to fetch data on server-side while ensuring user authentication
 export const getServerSidePropsUtility = async (context: GetServerSidePropsContext, address: string, propskey: string = 'recipes') => {
   try {
-    // Offline self-hosted app: proceed without a session instead of redirecting.
-    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/${address}`, {
+    // Offline self-hosted app: derive the base URL from the incoming request so it
+    // works regardless of the port/host, falling back to an env var if provided.
+    const host = context.req.headers.host;
+    const protocol = (context.req.headers['x-forwarded-proto'] as string) || 'http';
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || (host ? `${protocol}://${host}` : 'http://localhost:3000');
+    const { data } = await axios.get(`${baseUrl}/${address}`, {
       headers: {
         Cookie: context.req.headers.cookie || '',
       },
