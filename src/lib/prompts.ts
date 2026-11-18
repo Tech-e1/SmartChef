@@ -149,6 +149,17 @@ export const GROQ_CONFIG = {
 };
 
 /**
+ * NVIDIA NIM API configuration
+ * Requires NVIDIA_API_KEY environment variable
+ */
+export const NVIDIA_CONFIG = {
+  apiKey: process.env.NVIDIA_API_KEY,
+  baseUrl: 'https://integrate.api.nvidia.com/v1',
+  model: process.env.NVIDIA_MODEL || 'meta/llama-3.1-8b-instruct',
+  temperature: 0.7,
+};
+
+/**
  * Image search anchors for Wikimedia Commons
  * Order matters: try specific → broad → ingredient
  */
