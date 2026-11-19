@@ -200,7 +200,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
                 const needsRetry = !parsedOk || !usesRequestedIngredients(recipes, ingredients);
                 if (needsRetry) {
                     console.warn(`[${provider.name}] Retrying with stricter prompt...`);
-                    const strictPrompt = `${userPrompt}\n\nCRITICAL: Respond with valid JSON ONLY (no markdown). The recipe's "ingredients" array MUST contain items from the user's provided list.`;
+                    const strictPrompt = `${userPrompt}\n\nCRITICAL: You MUST use ONLY ingredients from the user's provided list. Do NOT add, substitute, or invent any ingredient not on the list. Every ingredient item in your JSON must match one of the user's provided ingredients exactly. Respond with valid JSON ONLY (no markdown, no code blocks, no explanations).`;
                     const retryRaw = await callAI(provider, strictPrompt);
                     if (retryRaw && retryRaw.trim()) {
                         try {

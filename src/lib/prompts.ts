@@ -2,53 +2,9 @@
 
 /**
  * System prompt for recipe generation
- * Forces Llama 3.1 8B to output pure JSON with specific fields
+ * Forces the model to output pure JSON using ONLY user-provided ingredients
  */
-export const RECIPE_GENERATION_SYSTEM_PROMPT = `
-You generate unique recipes based on user-provided ingredients and dietary preferences.
-
-CRITICAL OUTPUT FORMAT: Respond with valid JSON ONLY. No markdown, no code blocks, no explanations.
-
-JSON Schema:
-{
-  "title": string,              // Creative name you invent
-  "dish_type": string,          // Generic encyclopedia-style name (lowercase, singular, no invented adjectives)
-                                // Example: "lentil soup", "banana bread", "stir fry"
-                                // Used for finding a photograph - must match known dishes
-  "primary_ingredient": string, // Single dominant ingredient, lowercase singular
-  "cuisine": string | null,     // Region/tradition or null
-  "servings": number,           // 2-8 typically
-  "prep_minutes": number,       // Preparation time
-  "cook_minutes": number,       // Cooking time
-  "difficulty": "easy" | "medium" | "hard",
-  "dietary_tags": string[],     // e.g. ["vegan", "gluten-free", "keto"]
-  "ingredients": [
-    {
-      "quantity": number,
-      "unit": string,           // "cup", "tbsp", "tsp", "oz", "lb", "g", "kg", "piece", "bunch"
-      "item": string            // Ingredient name
-    }
-  ],
-  "steps": string[],            // Numbered instructions (array of 4-8 steps)
-  "notes": string | null        // Tips, substitutions, or storage info
-}
-
-DISH_TYPE RULES:
-- dish_type is used to search Wikimedia Commons for a photograph
-- Must be a term that plausibly has its own encyclopedia article
-- Lowercase, singular form (e.g., "stew" not "stews", "bread" not "breads")
-- NO adjectives you invented (e.g., "Smoky Chipotle Lentil Bake" → dish_type: "baked lentils")
-- If no exact match exists, use broader category: "soup", "pasta", "curry", "salad", "flatbread", etc.
-- Fall back to primary_ingredient if truly unknown
-
-CONSTRAINTS:
-- Respect dietary restrictions exactly (vegan = no animal products whatsoever)
-- Quantities must be realistic and consistent
-- Steps must be numbered, actionable, and sequential
-- Total time = prep_minutes + cook_minutes (should be ≤ 60 for quick meals)
-- Ingredients count: 6-15 items typically
-- EVERY ingredient in the recipe MUST come from the user's provided list. Do not invent or add any ingredient not on the list.
-`;
+export const RECIPE_GENERATION_SYSTEM_PROMPT = `\nYou generate unique recipes using ONLY the ingredients the user provides. You do not invent, substitute, or add any ingredient that is not on the user's list.\n\nCRITICAL OUTPUT FORMAT: Respond with valid JSON ONLY. No markdown, no code blocks, no explanations.\n\nJSON Schema:\n{\n  \"title\": string,\n  \"dish_type\": string,\n  \"primary_ingredient\": string,\n  \"cuisine\": string | null,\n  \"servings\": number,\n  \"prep_minutes\": number,\n  \"cook_minutes\": number,\n  \"difficulty\": \"easy\" | \"medium\" | \"hard\",\n  \"dietary_tags\": string[],\n  \"ingredients\": [\n    {\n      \"quantity\": number,\n      \"unit\": string,\n      \"item\": string\n    }\n  ],\n  \"steps\": string[],\n  \"notes\": string | null\n}\n\nINGREDIENT RULES (MUST FOLLOW):\n- The recipe's "ingredients" array MUST contain items from the user's provided ingredient list ONLY.\n- Do NOT add any ingredient that is not on the user's list.\n- Do NOT substitute ingredients (e.g., if user has "onion" but not "garlic", do not use "garlic").\n- Use at least 3-5 of the user's provided ingredients in the recipe.\n- Every "item" in the ingredients array must match (case-insensitive) one of the user's provided ingredients.\n- If you cannot make a recipe with the provided ingredients, still output a valid JSON using the closest matching ingredients from the list.\n\nDISH_TYPE RULES:\n- dish_type is used to search Wikimedia Commons for a photograph\n- Must be a term that plausibly has its own encyclopedia article\n- Lowercase, singular form (e.g., \"stew\" not \"stews\", \"bread\" not \"breads\")\n- NO invented adjectives (e.g., \"Smoky Chipotle Lentil Bake\" → dish_type: \"baked lentils\")\n- If no exact match exists, use broader category: \"soup\", \"pasta\", \"curry\", \"salad\", \"flatbread\", etc.\n- Fall back to primary_ingredient if truly unknown\n\nOTHER CONSTRAINTS:\n- Respect dietary restrictions exactly (vegan = no animal products whatsoever)\n- Quantities must be realistic and consistent\n- Steps must be numbered, actionable, and sequential\n- Total time = prep_minutes + cook_minutes (should be ≤ 60 for quick meals)\n- Ingredients count: 6-15 items typically\n`;
 
 /**
  * User prompt template for recipe generation
@@ -69,7 +25,7 @@ ${ingredientList}
 
 ${dietaryList}
 
-You MUST base the recipe on these provided ingredients. Do not substitute, add, or invent ingredients that were not provided. Use a reasonable subset of the provided ingredients.
+MANDATORY: Every ingredient in your recipe's ingredients array MUST come from the list above. Do not add, substitute, or invent any ingredient that is not listed above. Use at least 3-5 ingredients from the provided list.
 
 Output JSON only, following the schema exactly.`;
 }
@@ -78,24 +34,7 @@ Output JSON only, following the schema exactly.`;
  * Chat assistant system prompt
  * For follow-up questions about a recipe
  */
-export const CHAT_ASSISTANT_SYSTEM_PROMPT = `
-You are a cooking assistant helping users with a specific recipe.
-
-Respond naturally and helpfully, but keep answers concise.
-
-Possible user questions:
-- Substitutions for ingredients
-- Dietary modifications (make it vegan, gluten-free, etc.)
-- Timing adjustments
-- Cooking technique questions
-- Equipment alternatives
-- Storage and reheating advice
-
-NEVER invent unsafe food advice (raw meat temperatures, allergen cross-contamination, etc.).
-When uncertain about safety, say you're not certain.
-
-Format: Natural conversation, not JSON.
-`;
+export const CHAT_ASSISTANT_SYSTEM_PROMPT = `\nYou are a cooking assistant helping users with a specific recipe.\n\nRespond naturally and helpfully, but keep answers concise.\n\nPossible user questions:\n- Substitutions for ingredients\n- Dietary modifications (make it vegan, gluten-free, etc.)\n- Timing adjustments\n- Cooking technique questions\n- Equipment alternatives\n- Storage and reheating advice\n\nNEVER invent unsafe food advice (raw meat temperatures, allergen cross-contamination, etc.).\nWhen uncertain about safety, say you're not certain.\n\nFormat: Natural conversation, not JSON.\n`;
 
 /**
  * Create chat user message with recipe context
@@ -104,32 +43,13 @@ export function createChatUserMessage(
   recipe: { title: string; ingredients: any[]; steps: string[] },
   userQuestion: string
 ): string {
-  return `I'm following this recipe called "${recipe.title}".
-
-Ingredients:
-${recipe.ingredients.map(i => `- ${i.quantity} ${i.unit} ${i.item}`).join('\n')}
-
-Steps:
-${recipe.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}
-
-My question: ${userQuestion}`;
+  return `I'm following this recipe called \"${recipe.title}\".\n\nIngredients:\n${recipe.ingredients.map(i => `- ${i.quantity} ${i.unit} ${i.item}`).join('\n')}\n\nSteps:\n${recipe.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nMy question: ${userQuestion}`;
 }
 
 /**
  * Validate ingredient - simple helper prompt
  */
-export const VALIDATE_INGREDIENT_SYSTEM_PROMPT = `
-Validate whether an ingredient name is reasonable and recognizable.
-
-Respond with valid JSON ONLY:
-{
-  "valid": boolean,
-  "normalized": string,     // Standardized name if valid
-  "alternative_names": string[]  // Common aliases
-}
-
-Return valid: false if the ingredient is nonsense, a brand name, or too vague.
-`;
+export const VALIDATE_INGREDIENT_SYSTEM_PROMPT = `\nValidate whether an ingredient name is reasonable and recognizable.\n\nRespond with valid JSON ONLY:\n{\n  \"valid\": boolean,\n  \"normalized\": string,     // Standardized name if valid\n  \"alternative_names\": string[]  // Common aliases\n}\n\nReturn valid: false if the ingredient is nonsense, a brand name, or too vague.\n`;
 
 /**
  * Ollama API configuration
