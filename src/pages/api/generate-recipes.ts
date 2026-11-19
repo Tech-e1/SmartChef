@@ -108,9 +108,14 @@ function parseRecipes(raw: string): any[] {
 
 /**
  * Checks whether any generated recipe uses at least one of the requested ingredients.
+ * Accepts ingredients as strings or objects with a `name` property.
  */
-function usesRequestedIngredients(recipes: any[], ingredients: string[]): boolean {
-    const requested = ingredients.map((i) => i.toLowerCase().trim());
+function usesRequestedIngredients(recipes: any[], ingredients: any[]): boolean {
+    const requested = ingredients.map((i) => {
+        if (typeof i === 'string') return i.toLowerCase().trim();
+        if (i && typeof i === 'object' && i.name) return i.name.toLowerCase().trim();
+        return String(i || '').toLowerCase().trim();
+    }).filter(Boolean);
     return recipes.some((recipe) => {
         const recipeIngredients = (recipe.ingredients || []).map((ing: any) =>
             (ing.item || '').toLowerCase().trim()

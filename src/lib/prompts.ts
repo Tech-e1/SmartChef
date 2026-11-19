@@ -147,7 +147,7 @@ export const OLLAMA_CONFIG = {
 export const GROQ_CONFIG = {
   apiKey: process.env.GROQ_API_KEY,
   baseUrl: 'https://api.groq.com/openai/v1',
-  model: 'llama-3.1-8b-instruct',
+  model: 'llama-3.1-8b-instant',
   temperature: 0.7,
 };
 
