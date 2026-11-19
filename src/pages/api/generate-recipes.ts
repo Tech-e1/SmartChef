@@ -1,48 +1,83 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { apiMiddleware } from '../../lib/apiMiddleware';
-import { RECIPE_GENERATION_SYSTEM_PROMPT, createRecipeUserPrompt, NVIDIA_CONFIG } from '@/lib/prompts';
+import {
+  RECIPE_GENERATION_SYSTEM_PROMPT,
+  createRecipeUserPrompt,
+  NVIDIA_CONFIG,
+  GROQ_CONFIG,
+} from '@/lib/prompts';
+
+interface AIProviderConfig {
+  name: string;
+  apiKey: string | undefined;
+  baseUrl: string;
+  model: string;
+  temperature: number;
+}
+
+const PROVIDERS: AIProviderConfig[] = [
+  {
+    name: 'NVIDIA',
+    apiKey: NVIDIA_CONFIG.apiKey,
+    baseUrl: NVIDIA_CONFIG.baseUrl,
+    model: NVIDIA_CONFIG.model,
+    temperature: NVIDIA_CONFIG.temperature,
+  },
+  {
+    name: 'Groq',
+    apiKey: GROQ_CONFIG.apiKey,
+    baseUrl: GROQ_CONFIG.baseUrl,
+    model: GROQ_CONFIG.model,
+    temperature: GROQ_CONFIG.temperature,
+  },
+];
 
 /**
- * Calls the NVIDIA NIM chat completions endpoint and returns the assistant's text content.
+ * Calls an OpenAI-compatible chat completions endpoint and returns the assistant's text content.
  * Handles both `content` and `reasoning_content` (some reasoning models put output there).
  */
-async function callNvidia(userPrompt: string): Promise<string> {
+async function callAI(config: AIProviderConfig, userPrompt: string): Promise<string> {
+    if (!config.apiKey) {
+        throw new Error(`${config.name} API key is not configured`);
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000);
     try {
-        console.log(`[NVIDIA] Calling ${NVIDIA_CONFIG.baseUrl}/chat/completions with model ${NVIDIA_CONFIG.model}`);
+        console.log(`[${config.name}] Calling ${config.baseUrl}/chat/completions with model ${config.model}`);
         const startTime = Date.now();
-        const response = await fetch(`${NVIDIA_CONFIG.baseUrl}/chat/completions`, {
+        const response = await fetch(`${config.baseUrl}/chat/completions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${NVIDIA_CONFIG.apiKey}`,
+                'Authorization': `Bearer ${config.apiKey}`,
             },
             body: JSON.stringify({
-                model: NVIDIA_CONFIG.model,
+                model: config.model,
                 messages: [
                     { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
                     { role: 'user', content: userPrompt },
                 ],
-                temperature: NVIDIA_CONFIG.temperature,
+                temperature: config.temperature,
                 max_tokens: 4096,
             }),
             signal: controller.signal,
         });
-        console.log(`[NVIDIA] Response received: status=${response.status} in ${Date.now() - startTime}ms`);
+        const duration = Date.now() - startTime;
+        console.log(`[${config.name}] Response received: status=${response.status} in ${duration}ms`);
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('NVIDIA API error:', errorText);
-            throw new Error(`NVIDIA API responded with status ${response.status}`);
+            console.error(`${config.name} API error:`, errorText);
+            throw new Error(`${config.name} API responded with status ${response.status}`);
         }
 
         const data = await response.json();
         const message = data.choices?.[0]?.message || {};
         const content = message.content || message.reasoning_content || '';
-        console.log('[NVIDIA] Response keys:', Object.keys(data), '| content length:', content?.length || 0);
+        console.log(`[${config.name}] Response keys:`, Object.keys(data), '| content length:', content?.length || 0);
         if (!content || !content.trim()) {
-            console.error('[NVIDIA] Empty content. Full data:', JSON.stringify(data).slice(0, 2000));
+            console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 2000));
         }
         return content;
     } finally {
@@ -55,12 +90,10 @@ async function callNvidia(userPrompt: string): Promise<string> {
  */
 function parseRecipes(raw: string): any[] {
     let text = raw.trim();
-    // Strip markdown code fences if present
     const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
     if (fenceMatch) {
         text = fenceMatch[1].trim();
     }
-    // Fall back to the first {...} or [...] block
     if (!text.startsWith('{') && !text.startsWith('[')) {
         const objStart = text.indexOf('{');
         const arrStart = text.indexOf('[');
@@ -90,8 +123,7 @@ function usesRequestedIngredients(recipes: any[], ingredients: string[]): boolea
 
 /**
  * API handler for generating recipes based on provided ingredients and dietary preferences.
- * Calls NVIDIA NIM AI models using an API key, then returns the generated recipes as a JSON string
- * so they stay local in the client app (no external storage).
+ * Tries providers in order: NVIDIA → Groq. Falls back to the next provider on any error.
  */
 const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) => {
     try {
@@ -101,55 +133,63 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
             return res.status(400).json({ error: 'Ingredients are required' });
         }
 
-        if (!NVIDIA_CONFIG.apiKey) {
-            return res.status(500).json({ error: 'NVIDIA_API_KEY is not configured' });
-        }
-
         const userPrompt = createRecipeUserPrompt(ingredients, dietaryPreferences);
+        let lastError: Error | null = null;
 
-        // First attempt
-        let raw = await callNvidia(userPrompt);
-        let recipes: any[] = [];
-        let parsedOk = false;
+        // Try each provider in order until one succeeds
+        for (const provider of PROVIDERS) {
+            if (!provider.apiKey) {
+                console.log(`[${provider.name}] Skipping — API key not configured`);
+                continue;
+            }
 
-        if (raw && raw.trim()) {
             try {
-                recipes = parseRecipes(raw);
-                parsedOk = true;
-            } catch (parseError) {
-                console.error('Failed to parse NVIDIA response as JSON:', parseError);
-            }
-        }
+                let raw = await callAI(provider, userPrompt);
+                let recipes: any[] = [];
+                let parsedOk = false;
 
-        // Retry once if the response was empty/unparseable or didn't use the requested ingredients
-        const needsRetry = !parsedOk || !usesRequestedIngredients(recipes, ingredients);
-        if (needsRetry) {
-            console.warn('[NVIDIA] Retrying with stricter prompt (empty/unparseable or missing ingredients)...');
-            const strictPrompt = `${userPrompt}\n\nCRITICAL: Respond with valid JSON ONLY (no markdown). The recipe's "ingredients" array MUST contain items from the user's provided list.`;
-            const retryRaw = await callNvidia(strictPrompt);
-            if (retryRaw && retryRaw.trim()) {
-                try {
-                    const retryRecipes = parseRecipes(retryRaw);
-                    if (!parsedOk || usesRequestedIngredients(retryRecipes, ingredients)) {
-                        recipes = retryRecipes;
+                if (raw && raw.trim()) {
+                    try {
+                        recipes = parseRecipes(raw);
                         parsedOk = true;
+                    } catch (parseError) {
+                        console.error(`[${provider.name}] Failed to parse response as JSON:`, parseError);
                     }
-                } catch (retryParseError) {
-                    console.error('Failed to parse NVIDIA retry response as JSON:', retryParseError);
                 }
+
+                const needsRetry = !parsedOk || !usesRequestedIngredients(recipes, ingredients);
+                if (needsRetry) {
+                    console.warn(`[${provider.name}] Retrying with stricter prompt...`);
+                    const strictPrompt = `${userPrompt}\n\nCRITICAL: Respond with valid JSON ONLY (no markdown). The recipe's "ingredients" array MUST contain items from the user's provided list.`;
+                    const retryRaw = await callAI(provider, strictPrompt);
+                    if (retryRaw && retryRaw.trim()) {
+                        try {
+                            const retryRecipes = parseRecipes(retryRaw);
+                            if (!parsedOk || usesRequestedIngredients(retryRecipes, ingredients)) {
+                                recipes = retryRecipes;
+                                parsedOk = true;
+                            }
+                        } catch (retryParseError) {
+                            console.error(`[${provider.name}] Failed to parse retry response as JSON:`, retryParseError);
+                        }
+                    }
+                }
+
+                if (parsedOk) {
+                    res.status(200).json({ recipes: JSON.stringify(recipes) });
+                    return;
+                }
+            } catch (error: any) {
+                lastError = error;
+                console.log(`[${provider.name}] Failed:`, error.message);
+                continue;
             }
         }
 
-        if (!parsedOk) {
-            return res.status(500).json({ error: 'Failed to parse generated recipes' });
-        }
-
-        res.status(200).json({ recipes: JSON.stringify(recipes) });
+        // All providers failed
+        const errorMessage = lastError?.message || 'All AI providers failed';
+        res.status(500).json({ error: `Recipe generation failed: ${errorMessage}` });
     } catch (error: any) {
-        if (error.name === 'AbortError') {
-            console.error('NVIDIA API request timed out after 60 seconds');
-            return res.status(500).json({ error: 'Recipe generation timed out. The NVIDIA API is slow or unreachable. Please try again.' });
-        }
         console.error(error);
         res.status(500).json({ error: error.message || 'Failed to generate recipes' });
     }
