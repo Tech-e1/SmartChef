@@ -32,61 +32,82 @@ const PROVIDERS: AIProviderConfig[] = [
   },
 ];
 
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Calls an OpenAI-compatible chat completions endpoint and returns the assistant's text content.
  * Handles both `content` and `reasoning_content` (some reasoning models put output there).
+ * Retries once on 429 rate limit.
  */
 async function callAI(config: AIProviderConfig, userPrompt: string): Promise<string> {
     if (!config.apiKey) {
         throw new Error(`${config.name} API key is not configured`);
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
-    try {
-        console.log(`[${config.name}] Calling ${config.baseUrl}/chat/completions with model ${config.model}`);
-        const startTime = Date.now();
-        const response = await fetch(`${config.baseUrl}/chat/completions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${config.apiKey}`,
-            },
-            body: JSON.stringify({
-                model: config.model,
-                messages: [
-                    { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
-                    { role: 'user', content: userPrompt },
-                ],
-                temperature: config.temperature,
-                max_tokens: 4096,
-            }),
-            signal: controller.signal,
-        });
-        const duration = Date.now() - startTime;
-        console.log(`[${config.name}] Response received: status=${response.status} in ${duration}ms`);
+    for (let attempt = 0; attempt < 2; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
+        try {
+            console.log(`[${config.name}] Calling ${config.baseUrl}/chat/completions with model ${config.model} (attempt ${attempt + 1})`);
+            const startTime = Date.now();
+            const response = await fetch(`${config.baseUrl}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${config.apiKey}`,
+                },
+                body: JSON.stringify({
+                    model: config.model,
+                    messages: [
+                        { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
+                        { role: 'user', content: userPrompt },
+                    ],
+                    temperature: config.temperature,
+                    max_tokens: 4096,
+                }),
+                signal: controller.signal,
+            });
+            const duration = Date.now() - startTime;
+            console.log(`[${config.name}] Response received: status=${response.status} in ${duration}ms`);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`${config.name} API error:`, errorText);
-            throw new Error(`${config.name} API responded with status ${response.status}`);
-        }
+            if (response.status === 429 && attempt === 0) {
+                const errorText = await response.text();
+                let retryAfter = 5000;
+                const match = errorText.match(/try again in ([0-9.]+)s/);
+                if (match) {
+                    retryAfter = parseFloat(match[1]) * 1000;
+                }
+                console.log(`[${config.name}] Rate limited. Retrying in ${retryAfter}ms...`);
+                await sleep(retryAfter);
+                continue;
+            }
 
-        const data = await response.json();
-        const message = data.choices?.[0]?.message || {};
-        const content = message.content || message.reasoning_content || '';
-        console.log(`[${config.name}] Response keys:`, Object.keys(data), '| content length:', content?.length || 0);
-        if (!content || !content.trim()) {
-            console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 2000));
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`${config.name} API error:`, errorText);
+                throw new Error(`${config.name} API responded with status ${response.status}`);
+            }
+
+            const data = await response.json();
+            const message = data.choices?.[0]?.message || {};
+            const content = message.content || message.reasoning_content || '';
+            console.log(`[${config.name}] Response keys:`, Object.keys(data), '| content length:', content?.length || 0);
+            if (!content || !content.trim()) {
+                console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 2000));
+            }
+            return content;
+        } finally {
+            clearTimeout(timeoutId);
         }
-        return content;
-    } finally {
-        clearTimeout(timeoutId);
     }
+
+    throw new Error(`${config.name} rate limit exhausted`);
 }
 
 /**
- * Extracts a JSON array of recipes from the model's raw text, tolerating markdown fences.
+ * Extracts a JSON array of recipes from the model's raw text, tolerating markdown fences and truncation.
  */
 function parseRecipes(raw: string): any[] {
     let text = raw.trim();
@@ -102,8 +123,22 @@ function parseRecipes(raw: string): any[] {
             text = text.slice(start);
         }
     }
-    const parsed = JSON.parse(text);
-    return Array.isArray(parsed) ? parsed : [parsed];
+    // Try to repair truncated JSON by finding the last complete closing brace/bracket
+    try {
+        const parsed = JSON.parse(text);
+        return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+        // Try repairing: find last complete object
+        const lastBrace = text.lastIndexOf('}');
+        const lastBracket = text.lastIndexOf(']');
+        const end = Math.max(lastBrace, lastBracket);
+        if (end !== -1) {
+            const repaired = text.slice(0, end + 1);
+            const parsed = JSON.parse(repaired);
+            return Array.isArray(parsed) ? parsed : [parsed];
+        }
+        throw new Error('Cannot repair truncated JSON');
+    }
 }
 
 /**
@@ -128,7 +163,7 @@ function usesRequestedIngredients(recipes: any[], ingredients: any[]): boolean {
 
 /**
  * API handler for generating recipes based on provided ingredients and dietary preferences.
- * Tries providers in order: NVIDIA → Groq. Falls back to the next provider on any error.
+ * Tries providers in order: Groq → NVIDIA. Falls back to the next provider on any error.
  */
 const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) => {
     try {
@@ -187,6 +222,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
             } catch (error: any) {
                 lastError = error;
                 console.log(`[${provider.name}] Failed:`, error.message);
+                await sleep(1000); // Small delay before trying next provider
                 continue;
             }
         }
