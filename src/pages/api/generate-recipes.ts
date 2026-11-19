@@ -17,18 +17,18 @@ interface AIProviderConfig {
 
 const PROVIDERS: AIProviderConfig[] = [
   {
-    name: 'NVIDIA',
-    apiKey: NVIDIA_CONFIG.apiKey,
-    baseUrl: NVIDIA_CONFIG.baseUrl,
-    model: NVIDIA_CONFIG.model,
-    temperature: NVIDIA_CONFIG.temperature,
-  },
-  {
     name: 'Groq',
     apiKey: GROQ_CONFIG.apiKey,
     baseUrl: GROQ_CONFIG.baseUrl,
     model: GROQ_CONFIG.model,
     temperature: GROQ_CONFIG.temperature,
+  },
+  {
+    name: 'NVIDIA',
+    apiKey: NVIDIA_CONFIG.apiKey,
+    baseUrl: NVIDIA_CONFIG.baseUrl,
+    model: NVIDIA_CONFIG.model,
+    temperature: NVIDIA_CONFIG.temperature,
   },
 ];
 
