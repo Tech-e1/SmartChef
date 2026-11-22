@@ -116,8 +116,8 @@ export default function RecipeDetail() {
                         <div className="mb-4">
                         <h3 className="mb-2">Ingredients</h3> {/* Section title */}
                             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2"> {/* Responsive grid layout */}
-                                {recipeData.ingredients.map((ingredient: any) => (
-                                    <li key={ingredient.name} className="flex items-center"> {/* Ingredient item */}
+                                {recipeData.ingredients.map((ingredient: any, idx: number) => (
+                                    <li key={`${ingredient.name}-${idx}`} className="flex items-center"> {/* Ingredient item */}
                                         <CheckCircleIcon className="w-5 h-5 text-brand-500 mr-2 flex-shrink-0" /> {/* Icon next to ingredient */}
                                         <span className="text-gray-700">
                                             {ingredient.name}{ingredient.quantity && ` (${ingredient.quantity})`} {/* Ingredient name and quantity */}

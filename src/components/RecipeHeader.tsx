@@ -48,9 +48,9 @@ const RecipeHeader = ({ recipeData }: RecipeHeaderProps) => (
             <div className="mb-0">
                 <h3 className="text-xl font-semibold mb-2">Dietary Preferences</h3> {/* Section title */}
                 <div className="flex flex-wrap gap-2"> {/* Flex container with wrapping and gap */}
-                    {recipeData.dietary_tags.map((preference: string) => (
+                    {recipeData.dietary_tags.map((preference: string, idx: number) => (
                         <span
-                            key={preference} // Unique key for each preference
+                            key={`${preference}-${idx}`} // Unique key for each preference
                             className="bg-purple-100 text-purple-800 text-sm font-medium px-3 py-1 rounded-full" // Badge styling
                         >
                             {preference} {/* Display the dietary preference */}

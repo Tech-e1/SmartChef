@@ -53,8 +53,8 @@ const FrontDisplay = React.forwardRef<HTMLDivElement, FrontDisplayProps>(
                 </div>
                 <div className="mx-auto flex">
                     {
-                        recipe.dietary_tags.map((preference: string) => (
-                            <span key={preference} className="chip bg-brand-100 text-brand-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded hover:scale-110">{preference}</span>
+                        recipe.dietary_tags.map((preference: string, idx: number) => (
+                            <span key={`${preference}-${idx}`} className="chip bg-brand-100 text-brand-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded hover:scale-110">{preference}</span>
                         ))
                     }
                 </div>

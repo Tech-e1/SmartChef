@@ -109,8 +109,8 @@ const RecipeCard = ({ recipe, handleRecipeSelection, selectedRecipes, showSwitch
                             </DisclosureButton>
                             <DisclosurePanel className="mt-2 px-4 pt-4 pb-2 text-sm leading-relaxed bg-gray-50 border border-gray-200 rounded-lg space-y-2">
                                 <ul className="list-disc ml-5 space-y-2">
-                                    {recipe.ingredients.map((ingredient) => (
-                                        <li key={ingredient.item}>
+                                    {recipe.ingredients.map((ingredient, idx) => (
+                                        <li key={`${ingredient.item}-${idx}`}>
                                             {`${ingredient.item}${ingredient.quantity ? ` (${ingredient.quantity})` : ''}`}
                                         </li>
                                     ))}
@@ -123,9 +123,9 @@ const RecipeCard = ({ recipe, handleRecipeSelection, selectedRecipes, showSwitch
                 {/* === Dietary Preferences === */}
                 <h3 className="mt-4 text-gray-700 font-semibold text-lg">Dietary Preference:</h3>
                 <div className="mb-5 mt-2 flex flex-wrap gap-2">
-                    {recipe.dietary_tags.map((preference) => (
+                    {recipe.dietary_tags.map((preference, idx) => (
                         <span
-                            key={preference}
+                            key={`${preference}-${idx}`}
                             className="bg-purple-100 text-purple-800 text-sm font-medium px-2.5 py-0.5 rounded"
                         >
                             {preference}

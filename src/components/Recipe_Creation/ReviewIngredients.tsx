@@ -103,11 +103,11 @@ const ReviewComponent = ({
             className="flex flex-wrap gap-2 overflow-y-auto"
             style={{ maxHeight: '70px' }}
           >
-            {dietaryPreference.map((preference) => {
+            {dietaryPreference.map((preference, idx) => {
               const Icon = preferenceIconMap[preference] || SparklesIcon;
               return (
                 <span
-                  key={preference}
+                  key={`${preference}-${idx}`}
                   className="flex items-center bg-purple-100 text-purple-800 text-sm font-medium px-3 py-1 rounded-full"
                 >
                   <Icon className="w-4 h-4 mr-1 text-brand-600" aria-hidden="true" />
