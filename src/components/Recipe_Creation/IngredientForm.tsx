@@ -154,11 +154,13 @@ export default function IngredientForm({
         >
             {/* Enhanced "Add New Ingredient" Button */}
             <div className="flex justify-end w-full">
-                <NewIngredientDialog
-                    ingredientList={ingredientList}
-                    updateIngredientList={(newIngredient) => setIngredientList([...ingredientList, newIngredient])}
-                />
-            </div>
+                            <NewIngredientDialog
+                                ingredientList={ingredientList}
+                                updateIngredientList={(newIngredients: IngredientDocumentType[]) => setIngredientList([...ingredientList, ...newIngredients])}
+                                ingredients={ingredients}
+                                updateIngredients={updateIngredients}
+                            />
+                        </div>
             <div className="mt-4 w-full">
                 <IngredientList
                     ingredientList={ingredientList}
