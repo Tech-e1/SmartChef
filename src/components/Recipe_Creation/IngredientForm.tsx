@@ -24,13 +24,16 @@ const Chip = ({ ingredient, onDelete }: { ingredient: Ingredient; onDelete: (id:
 
 interface IngredientListProps {
     ingredientList: IngredientDocumentType[];
+    ingredients: Ingredient[];
     ingredientUpdate: (val: string | undefined) => void;
     generatedRecipes: Recipe[];
 }
 
-function IngredientList({ ingredientList, ingredientUpdate, generatedRecipes }: IngredientListProps) {
+function IngredientList({ ingredientList, ingredients, ingredientUpdate, generatedRecipes }: IngredientListProps) {
     const [selectedIngredient, setSelectedIngredient] = useState(initialComboIngredient);
     const [query, setQuery] = useState('');
+    const [bulkInput, setBulkInput] = useState('');
+    const [bulkMessage, setBulkMessage] = useState('');
 
     const filteredIngredients: IngredientDocumentType[] =
         query === ''
@@ -42,6 +45,48 @@ function IngredientList({ ingredientList, ingredientUpdate, generatedRecipes }: 
     const handleSelectedIngredient = (ingredient: ComboIngredient) => {
         setSelectedIngredient(initialComboIngredient);
         ingredientUpdate(ingredient?.name);
+    };
+
+    const parseBulkInput = (input: string): string[] => {
+        return input
+            .split(/[,;]/)
+            .map(s => s.trim())
+            .filter(s => s.length > 0);
+    };
+
+    const handleBulkSubmit = () => {
+        const parsed = parseBulkInput(bulkInput);
+        if (parsed.length === 0) return;
+
+        const existingNames = new Set(
+            ingredients.map(i => i.name.toLowerCase())
+        );
+
+        const added: string[] = [];
+        const skipped: string[] = [];
+
+        for (const name of parsed) {
+            const lower = name.toLowerCase();
+            if (existingNames.has(lower)) {
+                skipped.push(name);
+                continue;
+            }
+            ingredientUpdate(name);
+            existingNames.add(lower);
+            added.push(name);
+        }
+
+        setBulkInput('');
+        if (added.length > 0 && skipped.length === 0) {
+            setBulkMessage(`Added ${added.length} ingredient${added.length > 1 ? 's' : ''}`);
+            setTimeout(() => setBulkMessage(''), 2500);
+        } else if (added.length > 0 && skipped.length > 0) {
+            setBulkMessage(`Added: ${added.join(', ')}\nSkipped (duplicate): ${skipped.join(', ')}`);
+            setTimeout(() => setBulkMessage(''), 3500);
+        } else {
+            setBulkMessage(`Skipped (duplicate): ${skipped.join(', ')}`);
+            setTimeout(() => setBulkMessage(''), 2500);
+        }
     };
 
     return (
@@ -102,6 +147,40 @@ function IngredientList({ ingredientList, ingredientUpdate, generatedRecipes }: 
                     </ComboboxOptions>
                 )}
             </Combobox>
+
+            {/* Bulk ingredient entry */}
+            <div className="mt-3">
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={bulkInput}
+                        onChange={(e) => setBulkInput(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleBulkSubmit();
+                            }
+                        }}
+                        placeholder="flour, sugar; eggs, butter"
+                        className="flex-1 rounded-lg border border-gray-300 bg-white py-2.5 pl-4 pr-10 text-base text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
+                    />
+                    <button
+                        onClick={handleBulkSubmit}
+                        disabled={!bulkInput.trim() || Boolean(generatedRecipes.length)}
+                        className="bg-brand-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                    >
+                        Add All
+                    </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                    Separate ingredients with commas (,) or semicolons (;)
+                </p>
+                {bulkMessage && (
+                    <p className={`mt-1 text-sm ${bulkMessage.includes('Skipped') ? 'text-red-500' : 'text-green-600'}`} style={{ whiteSpace: 'pre-line' }}>
+                        {bulkMessage}
+                    </p>
+                )}
+            </div>
         </div>
     );
 }
@@ -164,6 +243,7 @@ export default function IngredientForm({
             <div className="mt-4 w-full">
                 <IngredientList
                     ingredientList={ingredientList}
+                    ingredients={ingredients}
                     ingredientUpdate={(val) => handleChange(val)}
                     generatedRecipes={generatedRecipes}
                 />
