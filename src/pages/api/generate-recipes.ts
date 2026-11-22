@@ -323,10 +323,21 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
                     if (retryRaw && retryRaw.trim()) {
                         try {
                             const retryRecipes = parseRecipes(retryRaw);
-                            if (!parsedOk || usesRequestedIngredients(retryRecipes, ingredients)) {
+                            const retryOk = usesRequestedIngredients(retryRecipes, ingredients);
+
+                            if (!parsedOk) {
+                                // First attempt failed to parse — accept retry only if it matches ingredients
+                                if (retryOk) {
+                                    recipes = retryRecipes;
+                                    parsedOk = true;
+                                }
+                            } else if (retryOk && retryRecipes.length >= recipes.length) {
+                                // First attempt parsed but failed ingredient check —
+                                // only replace if retry has at least as many recipes
                                 recipes = retryRecipes;
                                 parsedOk = true;
                             }
+                            // If parsedOk was true and retry isn't better, keep original recipes
                         } catch (retryParseError) {
                             console.error(`[${provider.name}] Failed to parse retry response as JSON:`, retryParseError);
                         }
