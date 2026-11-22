@@ -177,20 +177,27 @@ async function callCloudflare(
     }
 
     const data = await response.json();
-        // Cloudflare response: { result: { response: "..." } } or { result: { messages: [...] } }
-        let content = data.result?.response || data.result?.text || data.result?.content || '';
-        if (typeof content !== 'string') {
-            // Try to extract from messages array (chat completion format)
+        // Cloudflare response: { result: { response: "..." } } or { result: { messages: [...] } } or { result: "..." }
+        let content = '';
+        if (typeof data.result === 'string') {
+            content = data.result;
+        } else if (data.result && typeof data.result === 'object') {
+            const candidate = data.result.response ?? data.result.text ?? data.result.content;
+            if (typeof candidate === 'string') content = candidate;
+        }
+        if (!content) {
             const messages = data.result?.messages || data.messages || [];
             const assistantMsg = messages.find((m: any) => m.role === 'assistant') || messages[0];
-            content = assistantMsg?.content || '';
+            if (assistantMsg && typeof assistantMsg.content === 'string') {
+                content = assistantMsg.content;
+            }
         }
         if (typeof content !== 'string') {
             content = '';
         }
         console.log(`[${config.name}] Response keys:`, Object.keys(data), '| content length:', content?.length || 0);
         if (!content || !content.trim()) {
-            console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 2000));
+            console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 5000));
         }
         return content;
 }

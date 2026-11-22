@@ -11,10 +11,20 @@ export const RECIPE_GENERATION_SYSTEM_PROMPT = `\nYou generate unique recipes us
  * Fill in the variables before sending to LLM
  */
 export function createRecipeUserPrompt(
-  ingredients: string[],
+  ingredients: Array<string | { name?: string; item?: string; quantity?: string | number | null }>,
   dietaryPreferences: string[] = []
 ): string {
-  const ingredientList = ingredients.map(i => `- ${i}`).join('\n');
+  const ingredientList = ingredients
+    .map((i) => {
+      if (typeof i === 'string') return `- ${i}`;
+      if (i && typeof i === 'object') {
+        const name = i.name || i.item || '';
+        const qty = i.quantity ? ` (${i.quantity})` : '';
+        return `- ${name}${qty}`;
+      }
+      return `- ${String(i)}`;
+    })
+    .join('\n');
   const dietaryList = dietaryPreferences.length > 0
     ? `Dietary preferences: ${dietaryPreferences.join(', ')}.`
     : 'No specific dietary restrictions.';
