@@ -25,7 +25,7 @@ const Chip = ({ ingredient, onDelete }: { ingredient: Ingredient; onDelete: (id:
 interface IngredientListProps {
     ingredientList: IngredientDocumentType[];
     ingredients: Ingredient[];
-    ingredientUpdate: (val: string | undefined) => void;
+    ingredientUpdate: (val: string | string[]) => void;
     generatedRecipes: Recipe[];
 }
 
@@ -71,12 +71,16 @@ function IngredientList({ ingredientList, ingredients, ingredientUpdate, generat
                 skipped.push(name);
                 continue;
             }
-            ingredientUpdate(name);
             existingNames.add(lower);
             added.push(name);
         }
 
         setBulkInput('');
+
+        if (added.length > 0) {
+            ingredientUpdate(added);
+        }
+
         if (added.length > 0 && skipped.length === 0) {
             setBulkMessage(`Added ${added.length} ingredient${added.length > 1 ? 's' : ''}`);
             setTimeout(() => setBulkMessage(''), 2500);
@@ -202,23 +206,35 @@ export default function IngredientForm({
     const [error, setError] = useState<string | null>(null);
     const progressPercent = Math.min(ingredients.length, 10) * 10;
 
-    const handleChange = (val: string | undefined) => {
+    const handleChange = (val: string | string[] | undefined) => {
         if (!val) return;
-        const isRepeat = ingredients.some(
-            (i) => i.name.toLowerCase() === val.toLowerCase()
-        );
-        if (isRepeat) {
-            setError('This ingredient is already selected.');
+
+        const names = Array.isArray(val) ? val : [val];
+
+        // Filter out duplicates against current ingredients
+        const existingNames = new Set(ingredients.map(i => i.name.toLowerCase()));
+        const newNames: string[] = [];
+        for (const name of names) {
+            if (!existingNames.has(name.toLowerCase())) {
+                existingNames.add(name.toLowerCase());
+                newNames.push(name);
+            }
+        }
+
+        if (newNames.length === 0) {
+            setError('These ingredients are already selected.');
             return;
         }
-        if(ingredients.length >= 10){
+
+        if (ingredients.length + newNames.length > 10) {
             setError('You can select up to 10 ingredients only.');
-            return
+            return;
         }
+
         setError(null);
         updateIngredients([
             ...ingredients,
-            { name: val, id: uuidv4() },
+            ...newNames.map((name) => ({ name, id: uuidv4() })),
         ]);
     };
 
