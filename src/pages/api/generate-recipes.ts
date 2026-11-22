@@ -207,56 +207,174 @@ async function callCloudflare(
  */
 function parseRecipes(raw: string): any[] {
     let text = raw.trim();
+
+    // Strip markdown code fences
     const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
     if (fenceMatch) {
         text = fenceMatch[1].trim();
     }
-    if (!text.startsWith('{') && !text.startsWith('[')) {
-        const objStart = text.indexOf('{');
-        const arrStart = text.indexOf('[');
-        const start = arrStart !== -1 && (objStart === -1 || arrStart < objStart) ? arrStart : objStart;
-        if (start !== -1) {
-            text = text.slice(start);
+
+    // Find the first JSON-delimiting character
+    const objStart = text.indexOf('{');
+    const arrStart = text.indexOf('[');
+    const start =
+        arrStart !== -1 && (objStart === -1 || arrStart < objStart) ? arrStart : objStart;
+    if (start === -1) {
+        throw new Error('No JSON object or array found');
+    }
+    text = text.slice(start);
+
+    // Attempt 1: direct parse
+    try {
+        const parsed = JSON.parse(text);
+        return normalizeRecipes(parsed);
+    } catch {
+        // fall through to repair attempts
+    }
+
+    // Attempt 2: balance braces/brackets by counting opening vs closing
+    try {
+        const balanced = balanceBrackets(text);
+        const parsed = JSON.parse(balanced);
+        return normalizeRecipes(parsed);
+    } catch {
+        // fall through
+    }
+
+    // Attempt 3: try adding missing closing bracket/brace
+    try {
+        const firstChar = text[0];
+        let repaired = text.trim();
+        if (firstChar === '[') {
+            // Count brackets to see if we're missing closing ]
+            const openBrackets = (repaired.match(/\[/g) || []).length;
+            const closeBrackets = (repaired.match(/\]/g) || []).length;
+            if (openBrackets > closeBrackets) {
+                repaired = repaired + ']';
+            }
+        } else if (firstChar === '{') {
+            const openBraces = (repaired.match(/\{/g) || []).length;
+            const closeBraces = (repaired.match(/\}/g) || []).length;
+            if (openBraces > closeBraces) {
+                repaired = repaired + '}';
+            }
+        }
+        const parsed = JSON.parse(repaired);
+        return normalizeRecipes(parsed);
+    } catch {
+        // fall through
+    }
+
+    // Attempt 4: find last position where braces/brackets are balanced
+    try {
+        const lastBalanced = findLastBalancedPosition(text);
+        if (lastBalanced !== -1) {
+            const repaired = text.slice(0, lastBalanced + 1);
+            const parsed = JSON.parse(repaired);
+            return normalizeRecipes(parsed);
+        }
+    } catch {
+        // fall through
+    }
+
+    throw new Error('Cannot repair truncated JSON');
+}
+
+function normalizeRecipes(parsed: any): any[] {
+    const normalizedRecipes = Array.isArray(parsed) ? parsed : [parsed];
+    return normalizedRecipes.map((recipe: any) => ({
+        ...recipe,
+        ingredients: (recipe.ingredients || []).map((ing: any) => ({
+            ...ing,
+            item:
+                typeof ing.item === 'string'
+                    ? ing.item
+                    : ing.item?.name || ing.name || '',
+        })),
+    }));
+}
+
+/**
+ * Counts open vs close braces/brackets and trims to the last position
+ * where they are balanced.
+ */
+function balanceBrackets(text: string): string {
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    let lastBalanced = -1;
+
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+
+        if (escaped) {
+            escaped = false;
+            continue;
+        }
+        if (ch === '\\' && inString) {
+            escaped = true;
+            continue;
+        }
+        if (ch === '"') {
+            inString = !inString;
+            continue;
+        }
+        if (inString) continue;
+
+        if (ch === '{' || ch === '[') {
+            depth++;
+        } else if (ch === '}' || ch === ']') {
+            depth--;
+            if (depth === 0) {
+                lastBalanced = i;
+            }
         }
     }
-    // Try to repair truncated JSON by finding the last complete closing brace/bracket
-        try {
-            const parsed = JSON.parse(text);
-            // Normalize ingredients: ensure item is a string, not an object
-            const normalizedRecipes = Array.isArray(parsed) ? parsed : [parsed];
-            const normalized = normalizedRecipes.map((recipe: any) => ({
-                ...recipe,
-                ingredients: (recipe.ingredients || []).map((ing: any) => ({
-                    ...ing,
-                    item: typeof ing.item === 'string' ? ing.item : ing.item?.name || ing.name || '',
-                })),
-            }));
-            return normalized;
-        } catch {
-            // Try repairing: find last complete object
-            const lastBrace = text.lastIndexOf('}');
-            const lastBracket = text.lastIndexOf(']');
-            const end = Math.max(lastBrace, lastBracket);
-            if (end !== -1) {
-                const repaired = text.slice(0, end + 1);
-                try {
-                    const parsed = JSON.parse(repaired);
-                    // Normalize ingredients: ensure item is a string, not an object
-                    const normalizedRecipes = Array.isArray(parsed) ? parsed : [parsed];
-                    const normalized = normalizedRecipes.map((recipe: any) => ({
-                        ...recipe,
-                        ingredients: (recipe.ingredients || []).map((ing: any) => ({
-                            ...ing,
-                            item: typeof ing.item === 'string' ? ing.item : ing.item?.name || ing.name || '',
-                        })),
-                    }));
-                    return normalized;
-                } catch {
-                    // fall through to re-throw
-                }
-            }
-            throw new Error('Cannot repair truncated JSON');
+
+    if (lastBalanced !== -1) {
+        return text.slice(0, lastBalanced + 1);
+    }
+    return text;
+}
+
+/**
+ * Alternative balanced-position finder that returns the last index
+ * where depth returns to zero.
+ */
+function findLastBalancedPosition(text: string): number {
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    let lastZero = -1;
+
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+
+        if (escaped) {
+            escaped = false;
+            continue;
         }
+        if (ch === '\\' && inString) {
+            escaped = true;
+            continue;
+        }
+        if (ch === '"') {
+            inString = !inString;
+            continue;
+        }
+        if (inString) continue;
+
+        if (ch === '{' || ch === '[') {
+            depth++;
+        } else if (ch === '}' || ch === ']') {
+            depth--;
+            if (depth === 0) {
+                lastZero = i;
+            }
+        }
+    }
+
+    return lastZero;
 }
 
 /**
