@@ -177,13 +177,24 @@ async function callCloudflare(
     }
 
     const data = await response.json();
-        // Cloudflare response: { result: { response: "..." } } or { result: { messages: [...] } } or { result: "..." }
+        // Cloudflare response formats:
+        //   { result: { response: "..." } }
+        //   { result: { text: "..." } }
+        //   { result: { choices: [{ message: { content: "..." } }] } }  (OpenAI-compatible)
+        //   { result: "..." }
         let content = '';
         if (typeof data.result === 'string') {
             content = data.result;
         } else if (data.result && typeof data.result === 'object') {
             const candidate = data.result.response ?? data.result.text ?? data.result.content;
             if (typeof candidate === 'string') content = candidate;
+            else {
+                // OpenAI-compatible choices format inside result
+                const choices = data.result.choices || [];
+                const firstChoice = choices[0] || {};
+                const msgContent = firstChoice?.message?.content || '';
+                if (typeof msgContent === 'string') content = msgContent;
+            }
         }
         if (!content) {
             const messages = data.result?.messages || data.messages || [];
