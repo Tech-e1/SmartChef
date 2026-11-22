@@ -79,7 +79,7 @@ export const CLOUDFLARE_CONFIG = {
   accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
   apiToken: process.env.CLOUDFLARE_API_TOKEN,
   baseUrl: process.env.CLOUDFLARE_ACCOUNT_ID
-    ? `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/v1`
+    ? `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai`
     : '',
   model: process.env.CLOUDFLARE_MODEL || '@cf/meta/llama-3.1-8b-instruct',
   temperature: 0.7,
