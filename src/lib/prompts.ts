@@ -72,6 +72,20 @@ export const GROQ_CONFIG = {
 };
 
 /**
+ * Cloudflare Workers AI configuration
+ * Requires CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN environment variables
+ */
+export const CLOUDFLARE_CONFIG = {
+  accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
+  apiToken: process.env.CLOUDFLARE_API_TOKEN,
+  baseUrl: process.env.CLOUDFLARE_ACCOUNT_ID
+    ? `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/v1`
+    : '',
+  model: process.env.CLOUDFLARE_MODEL || '@cf/meta/llama-3.1-8b-instruct',
+  temperature: 0.7,
+};
+
+/**
  * NVIDIA NIM API configuration
  * Requires NVIDIA_API_KEY environment variable
  */

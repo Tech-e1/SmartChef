@@ -5,10 +5,14 @@ import {
   createRecipeUserPrompt,
   NVIDIA_CONFIG,
   GROQ_CONFIG,
+  CLOUDFLARE_CONFIG,
 } from '@/lib/prompts';
+
+type ProviderType = 'openai' | 'cloudflare';
 
 interface AIProviderConfig {
   name: string;
+  type: ProviderType;
   apiKey: string | undefined;
   baseUrl: string;
   model: string;
@@ -18,13 +22,23 @@ interface AIProviderConfig {
 const PROVIDERS: AIProviderConfig[] = [
   {
     name: 'Groq',
+    type: 'openai',
     apiKey: GROQ_CONFIG.apiKey,
     baseUrl: GROQ_CONFIG.baseUrl,
     model: GROQ_CONFIG.model,
     temperature: GROQ_CONFIG.temperature,
   },
   {
+    name: 'Cloudflare',
+    type: 'cloudflare',
+    apiKey: CLOUDFLARE_CONFIG.apiToken,
+    baseUrl: CLOUDFLARE_CONFIG.baseUrl,
+    model: CLOUDFLARE_CONFIG.model,
+    temperature: CLOUDFLARE_CONFIG.temperature,
+  },
+  {
     name: 'NVIDIA',
+    type: 'openai',
     apiKey: NVIDIA_CONFIG.apiKey,
     baseUrl: NVIDIA_CONFIG.baseUrl,
     model: NVIDIA_CONFIG.model,
@@ -37,8 +51,8 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Calls an OpenAI-compatible chat completions endpoint and returns the assistant's text content.
- * Handles both `content` and `reasoning_content` (some reasoning models put output there).
+ * Calls an AI provider and returns the assistant's text content.
+ * Supports OpenAI-compatible (/chat/completions) and Cloudflare Workers AI (/run/{model}).
  * Retries once on 429 rate limit.
  */
 async function callAI(config: AIProviderConfig, userPrompt: string): Promise<string> {
@@ -50,60 +64,126 @@ async function callAI(config: AIProviderConfig, userPrompt: string): Promise<str
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000);
         try {
-            console.log(`[${config.name}] Calling ${config.baseUrl}/chat/completions with model ${config.model} (attempt ${attempt + 1})`);
-            const startTime = Date.now();
-            const response = await fetch(`${config.baseUrl}/chat/completions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${config.apiKey}`,
-                },
-                body: JSON.stringify({
-                    model: config.model,
-                    messages: [
-                        { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
-                        { role: 'user', content: userPrompt },
-                    ],
-                    temperature: config.temperature,
-                    max_tokens: 4096,
-                }),
-                signal: controller.signal,
-            });
-            const duration = Date.now() - startTime;
-            console.log(`[${config.name}] Response received: status=${response.status} in ${duration}ms`);
-
-            if (response.status === 429 && attempt === 0) {
-                const errorText = await response.text();
-                let retryAfter = 5000;
-                const match = errorText.match(/try again in ([0-9.]+)s/);
-                if (match) {
-                    retryAfter = parseFloat(match[1]) * 1000;
-                }
-                console.log(`[${config.name}] Rate limited. Retrying in ${retryAfter}ms...`);
-                await sleep(retryAfter);
-                continue;
+            if (config.type === 'cloudflare') {
+                return await callCloudflare(config, userPrompt, controller, timeoutId, attempt);
             }
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error(`${config.name} API error:`, errorText);
-                throw new Error(`${config.name} API responded with status ${response.status}`);
-            }
-
-            const data = await response.json();
-            const message = data.choices?.[0]?.message || {};
-            const content = message.content || message.reasoning_content || '';
-            console.log(`[${config.name}] Response keys:`, Object.keys(data), '| content length:', content?.length || 0);
-            if (!content || !content.trim()) {
-                console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 2000));
-            }
-            return content;
+            return await callOpenAICompatible(config, userPrompt, controller, timeoutId, attempt);
         } finally {
             clearTimeout(timeoutId);
         }
     }
 
     throw new Error(`${config.name} rate limit exhausted`);
+}
+
+async function callOpenAICompatible(
+    config: AIProviderConfig,
+    userPrompt: string,
+    controller: AbortController,
+    timeoutId: ReturnType<typeof setTimeout>,
+    attempt: number
+): Promise<string> {
+    console.log(`[${config.name}] Calling ${config.baseUrl}/chat/completions with model ${config.model} (attempt ${attempt + 1})`);
+    const startTime = Date.now();
+    const response = await fetch(`${config.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify({
+            model: config.model,
+            messages: [
+                { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
+                { role: 'user', content: userPrompt },
+            ],
+            temperature: config.temperature,
+            max_tokens: 4096,
+        }),
+        signal: controller.signal,
+    });
+    const duration = Date.now() - startTime;
+    console.log(`[${config.name}] Response received: status=${response.status} in ${duration}ms`);
+
+    if (response.status === 429 && attempt === 0) {
+        const errorText = await response.text();
+        let retryAfter = 5000;
+        const match = errorText.match(/try again in ([0-9.]+)s/);
+        if (match) {
+            retryAfter = parseFloat(match[1]) * 1000;
+        }
+        console.log(`[${config.name}] Rate limited. Retrying in ${retryAfter}ms...`);
+        await sleep(retryAfter);
+        return callOpenAICompatible(config, userPrompt, controller, timeoutId, attempt + 1);
+    }
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`${config.name} API error:`, errorText);
+        throw new Error(`${config.name} API responded with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    const message = data.choices?.[0]?.message || {};
+    const content = message.content || message.reasoning_content || '';
+    console.log(`[${config.name}] Response keys:`, Object.keys(data), '| content length:', content?.length || 0);
+    if (!content || !content.trim()) {
+        console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 2000));
+    }
+    return content;
+}
+
+async function callCloudflare(
+    config: AIProviderConfig,
+    userPrompt: string,
+    controller: AbortController,
+    timeoutId: ReturnType<typeof setTimeout>,
+    attempt: number
+): Promise<string> {
+    const url = `${config.baseUrl}/run/${config.model}`;
+    console.log(`[${config.name}] Calling ${url} (attempt ${attempt + 1})`);
+    const startTime = Date.now();
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify({
+            messages: [
+                { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
+                { role: 'user', content: userPrompt },
+            ],
+            temperature: config.temperature,
+            max_tokens: 4096,
+        }),
+        signal: controller.signal,
+    });
+    const duration = Date.now() - startTime;
+    console.log(`[${config.name}] Response received: status=${response.status} in ${duration}ms`);
+
+    if (response.status === 429 && attempt === 0) {
+        const errorText = await response.text();
+        let retryAfter = 5000;
+        console.log(`[${config.name}] Rate limited. Retrying in ${retryAfter}ms...`);
+        await sleep(retryAfter);
+        return callCloudflare(config, userPrompt, controller, timeoutId, attempt + 1);
+    }
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`${config.name} API error:`, errorText);
+        throw new Error(`${config.name} API responded with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    // Cloudflare response: { result: { response: "..." } }
+    const content = data.result?.response || data.result?.text || '';
+    console.log(`[${config.name}] Response keys:`, Object.keys(data), '| content length:', content?.length || 0);
+    if (!content || !content.trim()) {
+        console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 2000));
+    }
+    return content;
 }
 
 /**
@@ -163,7 +243,7 @@ function usesRequestedIngredients(recipes: any[], ingredients: any[]): boolean {
 
 /**
  * API handler for generating recipes based on provided ingredients and dietary preferences.
- * Tries providers in order: Groq → NVIDIA. Falls back to the next provider on any error.
+ * Tries providers in order: Groq → Cloudflare → NVIDIA. Falls back to the next provider on any error.
  */
 const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) => {
     try {
