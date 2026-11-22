@@ -177,13 +177,22 @@ async function callCloudflare(
     }
 
     const data = await response.json();
-    // Cloudflare response: { result: { response: "..." } }
-    const content = data.result?.response || data.result?.text || '';
-    console.log(`[${config.name}] Response keys:`, Object.keys(data), '| content length:', content?.length || 0);
-    if (!content || !content.trim()) {
-        console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 2000));
-    }
-    return content;
+        // Cloudflare response: { result: { response: "..." } } or { result: { messages: [...] } }
+        let content = data.result?.response || data.result?.text || data.result?.content || '';
+        if (typeof content !== 'string') {
+            // Try to extract from messages array (chat completion format)
+            const messages = data.result?.messages || data.messages || [];
+            const assistantMsg = messages.find((m: any) => m.role === 'assistant') || messages[0];
+            content = assistantMsg?.content || '';
+        }
+        if (typeof content !== 'string') {
+            content = '';
+        }
+        console.log(`[${config.name}] Response keys:`, Object.keys(data), '| content length:', content?.length || 0);
+        if (!content || !content.trim()) {
+            console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 2000));
+        }
+        return content;
 }
 
 /**
@@ -204,21 +213,43 @@ function parseRecipes(raw: string): any[] {
         }
     }
     // Try to repair truncated JSON by finding the last complete closing brace/bracket
-    try {
-        const parsed = JSON.parse(text);
-        return Array.isArray(parsed) ? parsed : [parsed];
-    } catch {
-        // Try repairing: find last complete object
-        const lastBrace = text.lastIndexOf('}');
-        const lastBracket = text.lastIndexOf(']');
-        const end = Math.max(lastBrace, lastBracket);
-        if (end !== -1) {
-            const repaired = text.slice(0, end + 1);
-            const parsed = JSON.parse(repaired);
-            return Array.isArray(parsed) ? parsed : [parsed];
+        try {
+            const parsed = JSON.parse(text);
+            // Normalize ingredients: ensure item is a string, not an object
+            const normalizedRecipes = Array.isArray(parsed) ? parsed : [parsed];
+            const normalized = normalizedRecipes.map((recipe: any) => ({
+                ...recipe,
+                ingredients: (recipe.ingredients || []).map((ing: any) => ({
+                    ...ing,
+                    item: typeof ing.item === 'string' ? ing.item : ing.item?.name || ing.name || '',
+                })),
+            }));
+            return normalized;
+        } catch {
+            // Try repairing: find last complete object
+            const lastBrace = text.lastIndexOf('}');
+            const lastBracket = text.lastIndexOf(']');
+            const end = Math.max(lastBrace, lastBracket);
+            if (end !== -1) {
+                const repaired = text.slice(0, end + 1);
+                try {
+                    const parsed = JSON.parse(repaired);
+                    // Normalize ingredients: ensure item is a string, not an object
+                    const normalizedRecipes = Array.isArray(parsed) ? parsed : [parsed];
+                    const normalized = normalizedRecipes.map((recipe: any) => ({
+                        ...recipe,
+                        ingredients: (recipe.ingredients || []).map((ing: any) => ({
+                            ...ing,
+                            item: typeof ing.item === 'string' ? ing.item : ing.item?.name || ing.name || '',
+                        })),
+                    }));
+                    return normalized;
+                } catch {
+                    // fall through to re-throw
+                }
+            }
+            throw new Error('Cannot repair truncated JSON');
         }
-        throw new Error('Cannot repair truncated JSON');
-    }
 }
 
 /**
