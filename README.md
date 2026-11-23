@@ -42,7 +42,7 @@ SmartChef is a privacy friendly fork of **Smart Recipe Generator**  that require
 
 ### 1. **Clone the Repository**
 ```bash
-git clone https://github.com/Dereje1/smart-recipe-generator.git
+git clone https://github.com/Tech-e1/SmartChef/tree/main.git
 cd SmartChef
 ```
 
