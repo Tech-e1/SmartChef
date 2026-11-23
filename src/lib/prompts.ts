@@ -62,48 +62,15 @@ export function createChatUserMessage(
 export const VALIDATE_INGREDIENT_SYSTEM_PROMPT = `\nValidate whether an ingredient name is reasonable and recognizable.\n\nRespond with valid JSON ONLY:\n{\n  \"valid\": boolean,\n  \"normalized\": string,     // Standardized name if valid\n  \"alternative_names\": string[]  // Common aliases\n}\n\nReturn valid: false if the ingredient is nonsense, a brand name, or too vague.\n`;
 
 /**
- * Ollama API configuration
+ * Ollama API configuration (local/offline AI)
+ * Requires Ollama running on the user's machine at http://localhost:11434
+ * Set OLLAMA_HOST and OLLAMA_MODEL environment variables to override.
  */
 export const OLLAMA_CONFIG = {
   endpoint: process.env.OLLAMA_HOST || 'http://localhost:11434',
   model: process.env.OLLAMA_MODEL || 'llama3.1:8b-instruct',
   temperature: 0.7,
   numPredictions: 2048,       // Max tokens
-};
-
-/**
- * Groq API configuration (if using hosted instead of local)
- */
-export const GROQ_CONFIG = {
-  apiKey: process.env.GROQ_API_KEY,
-  baseUrl: 'https://api.groq.com/openai/v1',
-  model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
-  temperature: 0.7,
-};
-
-/**
- * Cloudflare Workers AI configuration
- * Requires CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN environment variables
- */
-export const CLOUDFLARE_CONFIG = {
-  accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
-  apiToken: process.env.CLOUDFLARE_API_TOKEN,
-  baseUrl: process.env.CLOUDFLARE_ACCOUNT_ID
-    ? `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai`
-    : '',
-  model: process.env.CLOUDFLARE_MODEL || '@cf/meta/llama-3.1-8b-instruct',
-  temperature: 0.7,
-};
-
-/**
- * NVIDIA NIM API configuration
- * Requires NVIDIA_API_KEY environment variable
- */
-export const NVIDIA_CONFIG = {
-  apiKey: process.env.NVIDIA_API_KEY,
-  baseUrl: 'https://integrate.api.nvidia.com/v1',
-  model: process.env.NVIDIA_MODEL || 'minimaxai/minimax-m3.1-flash',
-  temperature: 0.7,
 };
 
 /**

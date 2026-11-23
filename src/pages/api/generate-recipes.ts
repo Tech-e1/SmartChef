@@ -3,214 +3,68 @@ import { apiMiddleware } from '../../lib/apiMiddleware';
 import {
   RECIPE_GENERATION_SYSTEM_PROMPT,
   createRecipeUserPrompt,
-  NVIDIA_CONFIG,
-  GROQ_CONFIG,
-  CLOUDFLARE_CONFIG,
+  OLLAMA_CONFIG,
 } from '@/lib/prompts';
-
-type ProviderType = 'openai' | 'cloudflare';
-
-interface AIProviderConfig {
-  name: string;
-  type: ProviderType;
-  apiKey: string | undefined;
-  baseUrl: string;
-  model: string;
-  temperature: number;
-}
-
-const PROVIDERS: AIProviderConfig[] = [
-  {
-    name: 'Groq',
-    type: 'openai',
-    apiKey: GROQ_CONFIG.apiKey,
-    baseUrl: GROQ_CONFIG.baseUrl,
-    model: GROQ_CONFIG.model,
-    temperature: GROQ_CONFIG.temperature,
-  },
-  {
-    name: 'Cloudflare',
-    type: 'cloudflare',
-    apiKey: CLOUDFLARE_CONFIG.apiToken,
-    baseUrl: CLOUDFLARE_CONFIG.baseUrl,
-    model: CLOUDFLARE_CONFIG.model,
-    temperature: CLOUDFLARE_CONFIG.temperature,
-  },
-  {
-    name: 'NVIDIA',
-    type: 'openai',
-    apiKey: NVIDIA_CONFIG.apiKey,
-    baseUrl: NVIDIA_CONFIG.baseUrl,
-    model: NVIDIA_CONFIG.model,
-    temperature: NVIDIA_CONFIG.temperature,
-  },
-];
 
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Calls an AI provider and returns the assistant's text content.
- * Supports OpenAI-compatible (/chat/completions) and Cloudflare Workers AI (/run/{model}).
- * Retries once on 429 rate limit.
+ * Calls the local Ollama API and returns the assistant's text content.
+ * Ollama runs entirely on the user's device — no external API keys or cloud services required.
+ * Retries once on failure.
  */
-async function callAI(config: AIProviderConfig, userPrompt: string): Promise<string> {
-    if (!config.apiKey) {
-        throw new Error(`${config.name} API key is not configured`);
-    }
+async function callOllama(userPrompt: string): Promise<string> {
+    const endpoint = `${OLLAMA_CONFIG.endpoint}/api/chat`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout for local inference
 
     for (let attempt = 0; attempt < 2; attempt++) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000);
         try {
-            if (config.type === 'cloudflare') {
-                return await callCloudflare(config, userPrompt, controller, timeoutId, attempt);
+            console.log(`[Ollama] Calling ${endpoint} with model ${OLLAMA_CONFIG.model} (attempt ${attempt + 1})`);
+            const startTime = Date.now();
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: OLLAMA_CONFIG.model,
+                    messages: [
+                        { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
+                        { role: 'user', content: userPrompt },
+                    ],
+                    stream: false,
+                    options: {
+                        temperature: OLLAMA_CONFIG.temperature,
+                        num_predict: OLLAMA_CONFIG.numPredictions,
+                    },
+                }),
+                signal: controller.signal,
+            });
+            const duration = Date.now() - startTime;
+            console.log(`[Ollama] Response received: status=${response.status} in ${duration}ms`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`[Ollama] API error:`, errorText);
+                throw new Error(`Ollama API responded with status ${response.status}`);
             }
-            return await callOpenAICompatible(config, userPrompt, controller, timeoutId, attempt);
+
+            const data = await response.json();
+            const content = data.message?.content || '';
+            console.log(`[Ollama] Content length:`, content?.length || 0);
+            if (!content || !content.trim()) {
+                console.error(`[Ollama] Empty content. Full data:`, JSON.stringify(data).slice(0, 2000));
+            }
+            return content;
         } finally {
             clearTimeout(timeoutId);
         }
     }
 
-    throw new Error(`${config.name} rate limit exhausted`);
-}
-
-async function callOpenAICompatible(
-    config: AIProviderConfig,
-    userPrompt: string,
-    controller: AbortController,
-    timeoutId: ReturnType<typeof setTimeout>,
-    attempt: number
-): Promise<string> {
-    console.log(`[${config.name}] Calling ${config.baseUrl}/chat/completions with model ${config.model} (attempt ${attempt + 1})`);
-    const startTime = Date.now();
-    const response = await fetch(`${config.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.apiKey}`,
-        },
-        body: JSON.stringify({
-            model: config.model,
-            messages: [
-                { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
-                { role: 'user', content: userPrompt },
-            ],
-            temperature: config.temperature,
-            max_tokens: 4096,
-        }),
-        signal: controller.signal,
-    });
-    const duration = Date.now() - startTime;
-    console.log(`[${config.name}] Response received: status=${response.status} in ${duration}ms`);
-
-    if (response.status === 429 && attempt === 0) {
-        const errorText = await response.text();
-        let retryAfter = 5000;
-        const match = errorText.match(/try again in ([0-9.]+)s/);
-        if (match) {
-            retryAfter = parseFloat(match[1]) * 1000;
-        }
-        console.log(`[${config.name}] Rate limited. Retrying in ${retryAfter}ms...`);
-        await sleep(retryAfter);
-        return callOpenAICompatible(config, userPrompt, controller, timeoutId, attempt + 1);
-    }
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`${config.name} API error:`, errorText);
-        throw new Error(`${config.name} API responded with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    const message = data.choices?.[0]?.message || {};
-    const content = message.content || message.reasoning_content || '';
-    console.log(`[${config.name}] Response keys:`, Object.keys(data), '| content length:', content?.length || 0);
-    if (!content || !content.trim()) {
-        console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 2000));
-    }
-    return content;
-}
-
-async function callCloudflare(
-    config: AIProviderConfig,
-    userPrompt: string,
-    controller: AbortController,
-    timeoutId: ReturnType<typeof setTimeout>,
-    attempt: number
-): Promise<string> {
-    const url = `${config.baseUrl}/run/${config.model}`;
-    console.log(`[${config.name}] Calling ${url} (attempt ${attempt + 1})`);
-    const startTime = Date.now();
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.apiKey}`,
-        },
-        body: JSON.stringify({
-            messages: [
-                { role: 'system', content: RECIPE_GENERATION_SYSTEM_PROMPT },
-                { role: 'user', content: userPrompt },
-            ],
-            temperature: config.temperature,
-            max_tokens: 4096,
-        }),
-        signal: controller.signal,
-    });
-    const duration = Date.now() - startTime;
-    console.log(`[${config.name}] Response received: status=${response.status} in ${duration}ms`);
-
-    if (response.status === 429 && attempt === 0) {
-        const errorText = await response.text();
-        let retryAfter = 5000;
-        console.log(`[${config.name}] Rate limited. Retrying in ${retryAfter}ms...`);
-        await sleep(retryAfter);
-        return callCloudflare(config, userPrompt, controller, timeoutId, attempt + 1);
-    }
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`${config.name} API error:`, errorText);
-        throw new Error(`${config.name} API responded with status ${response.status}`);
-    }
-
-    const data = await response.json();
-        // Cloudflare response formats:
-        //   { result: { response: "..." } }
-        //   { result: { text: "..." } }
-        //   { result: { choices: [{ message: { content: "..." } }] } }  (OpenAI-compatible)
-        //   { result: "..." }
-        let content = '';
-        if (typeof data.result === 'string') {
-            content = data.result;
-        } else if (data.result && typeof data.result === 'object') {
-            const candidate = data.result.response ?? data.result.text ?? data.result.content;
-            if (typeof candidate === 'string') content = candidate;
-            else {
-                // OpenAI-compatible choices format inside result
-                const choices = data.result.choices || [];
-                const firstChoice = choices[0] || {};
-                const msgContent = firstChoice?.message?.content || '';
-                if (typeof msgContent === 'string') content = msgContent;
-            }
-        }
-        if (!content) {
-            const messages = data.result?.messages || data.messages || [];
-            const assistantMsg = messages.find((m: any) => m.role === 'assistant') || messages[0];
-            if (assistantMsg && typeof assistantMsg.content === 'string') {
-                content = assistantMsg.content;
-            }
-        }
-        if (typeof content !== 'string') {
-            content = '';
-        }
-        console.log(`[${config.name}] Response keys:`, Object.keys(data), '| content length:', content?.length || 0);
-        if (!content || !content.trim()) {
-            console.error(`[${config.name}] Empty content. Full data:`, JSON.stringify(data).slice(0, 5000));
-        }
-        return content;
+    throw new Error('Ollama request failed after retries');
 }
 
 /**
@@ -257,7 +111,6 @@ function parseRecipes(raw: string): any[] {
         const firstChar = text[0];
         let repaired = text.trim();
         if (firstChar === '[') {
-            // Count brackets to see if we're missing closing ]
             const openBrackets = (repaired.match(/\[/g) || []).length;
             const closeBrackets = (repaired.match(/\]/g) || []).length;
             if (openBrackets > closeBrackets) {
@@ -409,8 +262,8 @@ function usesRequestedIngredients(recipes: any[], ingredients: any[]): boolean {
 }
 
 /**
- * API handler for generating recipes based on provided ingredients and dietary preferences.
- * Tries providers in order: Groq → Cloudflare → NVIDIA. Falls back to the next provider on any error.
+ * API handler for generating recipes using only local Ollama AI.
+ * No external API keys or cloud services required — everything runs on the user's device.
  */
 const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) => {
     try {
@@ -421,73 +274,64 @@ const handler = async (req: NextApiRequest, res: NextApiResponse, session: any) 
         }
 
         const userPrompt = createRecipeUserPrompt(ingredients, dietaryPreferences);
-        let lastError: Error | null = null;
 
-        // Try each provider in order until one succeeds
-        for (const provider of PROVIDERS) {
-            if (!provider.apiKey) {
-                console.log(`[${provider.name}] Skipping — API key not configured`);
-                continue;
-            }
+        let raw: string;
+        try {
+            raw = await callOllama(userPrompt);
+        } catch (error: any) {
+            return res.status(500).json({
+                error: `Ollama connection failed: ${error.message}. Make sure Ollama is running locally at ${OLLAMA_CONFIG.endpoint}.`,
+            });
+        }
 
+        let recipes: any[] = [];
+        let parsedOk = false;
+
+        if (raw && raw.trim()) {
             try {
-                let raw = await callAI(provider, userPrompt);
-                let recipes: any[] = [];
-                let parsedOk = false;
-
-                if (raw && raw.trim()) {
-                    try {
-                        recipes = parseRecipes(raw);
-                        parsedOk = true;
-                    } catch (parseError) {
-                        console.error(`[${provider.name}] Failed to parse response as JSON:`, parseError);
-                    }
-                }
-
-                const needsRetry = !parsedOk || !usesRequestedIngredients(recipes, ingredients);
-                if (needsRetry) {
-                    console.warn(`[${provider.name}] Retrying with stricter prompt...`);
-                    const strictPrompt = `${userPrompt}\n\nCRITICAL: You MUST use ONLY ingredients from the user's provided list. Do NOT add, substitute, or invent any ingredient not on the list. Every ingredient item in your JSON must match one of the user's provided ingredients exactly. Respond with valid JSON ONLY (no markdown, no code blocks, no explanations).`;
-                    const retryRaw = await callAI(provider, strictPrompt);
-                    if (retryRaw && retryRaw.trim()) {
-                        try {
-                            const retryRecipes = parseRecipes(retryRaw);
-                            const retryOk = usesRequestedIngredients(retryRecipes, ingredients);
-
-                            if (!parsedOk) {
-                                // First attempt failed to parse — accept retry only if it matches ingredients
-                                if (retryOk) {
-                                    recipes = retryRecipes;
-                                    parsedOk = true;
-                                }
-                            } else if (retryOk && retryRecipes.length >= recipes.length) {
-                                // First attempt parsed but failed ingredient check —
-                                // only replace if retry has at least as many recipes
-                                recipes = retryRecipes;
-                                parsedOk = true;
-                            }
-                            // If parsedOk was true and retry isn't better, keep original recipes
-                        } catch (retryParseError) {
-                            console.error(`[${provider.name}] Failed to parse retry response as JSON:`, retryParseError);
-                        }
-                    }
-                }
-
-                if (parsedOk) {
-                    res.status(200).json({ recipes: JSON.stringify(recipes) });
-                    return;
-                }
-            } catch (error: any) {
-                lastError = error;
-                console.log(`[${provider.name}] Failed:`, error.message);
-                await sleep(1000); // Small delay before trying next provider
-                continue;
+                recipes = parseRecipes(raw);
+                parsedOk = true;
+            } catch (parseError) {
+                console.error('[Ollama] Failed to parse response as JSON:', parseError);
             }
         }
 
-        // All providers failed
-        const errorMessage = lastError?.message || 'All AI providers failed';
-        res.status(500).json({ error: `Recipe generation failed: ${errorMessage}` });
+        const needsRetry = !parsedOk || !usesRequestedIngredients(recipes, ingredients);
+        if (needsRetry) {
+            console.warn('[Ollama] Retrying with stricter prompt...');
+            const strictPrompt = `${userPrompt}\n\nCRITICAL: You MUST use ONLY ingredients from the user's provided list. Do NOT add, substitute, or invent any ingredient not on the list. Every ingredient item in your JSON must match one of the user's provided ingredients exactly. Respond with valid JSON ONLY (no markdown, no code blocks, no explanations).`;
+            const retryRaw = await callOllama(strictPrompt);
+            if (retryRaw && retryRaw.trim()) {
+                try {
+                    const retryRecipes = parseRecipes(retryRaw);
+                    const retryOk = usesRequestedIngredients(retryRecipes, ingredients);
+
+                    if (!parsedOk) {
+                        // First attempt failed to parse — accept retry only if it matches ingredients
+                        if (retryOk) {
+                            recipes = retryRecipes;
+                            parsedOk = true;
+                        }
+                    } else if (retryOk && retryRecipes.length >= recipes.length) {
+                        // First attempt parsed but failed ingredient check —
+                        // only replace if retry has at least as many recipes
+                        recipes = retryRecipes;
+                        parsedOk = true;
+                    }
+                } catch (retryParseError) {
+                    console.error('[Ollama] Failed to parse retry response as JSON:', retryParseError);
+                }
+            }
+        }
+
+        if (parsedOk) {
+            res.status(200).json({ recipes: JSON.stringify(recipes) });
+            return;
+        }
+
+        res.status(500).json({
+            error: 'Ollama returned invalid recipe JSON. Make sure you are using a capable model (e.g., llama3.1:8b-instruct or larger).',
+        });
     } catch (error: any) {
         console.error(error);
         res.status(500).json({ error: error.message || 'Failed to generate recipes' });

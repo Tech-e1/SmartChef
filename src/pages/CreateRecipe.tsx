@@ -86,7 +86,7 @@ function Navigation({
       }, 500); // Smooth transition after completion
     } catch (error: any) {
       setIsComplete(true); // Finish the progress bar so it doesn't stick at 90%
-      setGenerationError(error.message || 'Failed to generate recipes. Please check your NVIDIA API key and try again.');
+      setGenerationError(error.message || 'Failed to generate recipes. Make sure Ollama is running locally.');
       setTimeout(() => {
         setIsLoading(false);
       }, 500);
