@@ -55,9 +55,8 @@ npm install
 Create a `.env.local` file and add:
 ```env
 
-OPENAI_API_KEY=your-openai-api-key
-OPENAI_TEXT_MODEL=gpt-5-mini
-OPENAI_IMAGE_MODEL=gpt-image-1
+OLLAMA_HOST=URL:PORT (default: http://localhost:11434)
+OLLAMA_MODEL=MODELNAME (default: llama3.1:8b-instruct)
 
 ```
 
