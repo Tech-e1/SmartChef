@@ -50,8 +50,14 @@ cd SmartChef
 ```bash
 npm install
 ```
+### 3.  **Install Ollama Model**
+To use the app, Ollama must be running locally on their machine:
 
-### 3. **Set Up Environment Variables**
+Install Ollama from ollama.com
+Pull a model (e.g., ollama pull llama3.1:8b-instruct)
+Start Ollama (it runs on http://localhost:11434 by default)
+
+### 4. **Set Up Environment Variables**
 Create a `.env.local` file and add:
 ```env
 
@@ -60,7 +66,7 @@ OLLAMA_MODEL=MODELNAME (default: llama3.1:8b-instruct)
 
 ```
 
-### 4. **Run the Development Server**
+### 5. **Run the Development Server**
 ```bash
 npm run dev
 ```
